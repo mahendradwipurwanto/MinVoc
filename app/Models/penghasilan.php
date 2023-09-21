@@ -9,12 +9,21 @@ class penghasilan extends Model
 {
     use HasFactory;
     protected $table = 'penghasilan';
-    protected $fillable = ['artist_id','penghasilan','bulan'];
-    // public function riwayat() {
-    //     return $this->belongsTo(Riwayat::class);
-    // }
-    public function artist() {
-        return $this->belongsTo(artist::class,'id','user_id');
+    protected $fillable = [
+        'artist_id',
+        'user_id',
+        'penghasilan',
+        'status',
+        'bulan',
+        'is_take',
+        'terakhir_diambil',
+        'penghasilanCair',
+        'Pengajuan',
+        'is_submit',
+        'Pengajuan_tanggal'
+    ];
+    public function artist()
+    {
+        return $this->hasOne(artist::class, 'id', 'artist_id');
     }
 }
-

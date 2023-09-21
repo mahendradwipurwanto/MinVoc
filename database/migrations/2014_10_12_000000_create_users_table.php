@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
+            $table->boolean('is_login')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
@@ -32,6 +33,7 @@ return new class extends Migration
             'avatar' => 'images/default.png',
             'deskripsi' => 'none',
             'name' => 'admin',
+            'is_login' => true,
             'email' => 'untukprojects123@gmail.com',
             'password' => '$2y$10$eSfmaLKIg86V0xg2R1pVP.BKIusL1PRv48mxqFq5LZeImpgpul30i',
         ]);

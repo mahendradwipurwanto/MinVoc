@@ -1,10 +1,18 @@
 @extends('artisVerified.components.artisVerifiedTemplate')
 
+{{-- @extends('artis.components.artisTemplate') --}}
+
+
 @section('content')
     <link rel="stylesheet" href="/user/assets/css/unggah.css">
+    <style>
+        select {
+            min-height: 0;
+        }
+    </style>
     <div class="main-panel">
         <div class="content-wrapper">
-            <form class="row" action="{{ route('unggah.artisVerified') }}" method="POST" enctype="multipart/form-data">
+            <form class="row mb-3" action="{{ route('unggah.artisVerified') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="col d-flex flex-row gap-4">
                     <div>
@@ -18,7 +26,7 @@
                                 </svg>
                             </label>
                             <input type="file" id="tamel" name="image" value="{{ old('image') }}"
-                                accept="image/png,image/jpg">
+                                accept="image/*">
                         </div>
                         @error('image')
                             <div class="text-danger" style="font-size: 14px; width: 170px">{{ $message }}</div>
@@ -26,11 +34,11 @@
                     </div>
 
                     <div class="d-flex flex-column mb-3 col-lg-9">
-                        <div class="my-2 d-flex flex-row justify-content-around">
+                        <div class="d-flex flex-row justify-content-around">
                             <div class="col-md-8">
                                 <input type="text" class="form-control" style="border-radius: 13px"
                                     id="exampleFormControlInput1" placeholder="Judul Lagu" name="judul"
-                                    value="{{ old('judul') }}">
+                                    value="{{ old('judul') }}" maxlength="55">
                                 @error('judul')
                                     <div class="text-danger" style="font-size: 14px">{{ $message }}</div>
                                 @enderror
@@ -106,7 +114,7 @@
                                         <td class="table-cell">{{ $item->created_at->format('d F Y') }}</td>
                                         <td class="table-cell {{ $item->is_approved == 0 ? 'text-warning' : 'text-success' }}"
                                             style="font-weight: 600">
-                                            {{ $item->is_approved == 0 ? 'Pending' : 'Publish' }}</td>
+                                            {{ $item->is_approved == 0 ? 'Menunggu' : 'Telah Terbit' }}</td>
                                     </tr>
                                 @endIf
                             @endforeach

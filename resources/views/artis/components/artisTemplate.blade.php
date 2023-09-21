@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.0/howler.min.js"></script>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -26,6 +27,11 @@
             font-family: 'Poppins', sans-serif;
         }
 
+        .fixedbar {
+            position: fixed;
+            z-index: 1030;
+            width: 245px;
+        }
 
         .search-container {
             position: relative;
@@ -152,6 +158,86 @@
             content: "\f004";
             color: #957DAD;
         }
+
+        /* CSS untuk styling pagination */
+        .pagination {
+            margin-top: 20px;
+        }
+
+        .page-item:first-child .page-link {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-radius: 10px;
+        }
+
+        .page-item:last-child .page-link {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-radius: 10px;
+        }
+
+        .pagination li {
+            display: inline;
+            margin-right: 5px;
+        }
+
+        .pagination li a {
+            text-decoration: none;
+            border-radius: 10px;
+        }
+
+        .page-link.active {
+            background-color: #957DAD;
+            border: 1px solid #957DAD;
+        }
+
+        .pagination li.active a {
+            color: #fff;
+        }
+
+        .pagination li:hover {
+            background-color: #ddd;
+        }
+    </style>
+    <style>
+        /* CSS untuk styling pagination */
+        .pagination {
+            margin-top: 20px;
+        }
+
+        .page-item:first-child .page-link {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-radius: 10px;
+        }
+
+        .page-item:last-child .page-link {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-radius: 10px;
+        }
+
+        .pagination li {
+            display: inline;
+            margin-right: 5px;
+        }
+
+        .pagination li a {
+            text-decoration: none;
+        }
+
+        .page-link.active {
+            background-color: #957DAD;
+            border: 1px solid #957DAD;
+        }
+
+        .pagination li.active a {
+            color: #fff;
+        }
+
+        .pagination li:hover {
+            background-color: #ddd;
+        }
     </style>
     <script>
         // INI SCRIPT UNTUK HASIL SEARCH TAMPIL/TIDAK
@@ -178,7 +264,7 @@
                 <a class="sidebar-brand brand-logo" href="/artis/dashboard"><img src="/user/assets/images/logo.svg"
                         alt="logo" /></a>
             </div>
-            <ul class="nav">
+            <ul class="nav fixedbar">
                 <li class="nav-item menu-items">
                     <a class="nav-link" href="/artis/dashboard">
                         <span class="menu-icon ">
@@ -194,7 +280,7 @@
                         </span>
                         <span class="menu-title">Album</span>
                         <a href="#ui-basic" data-toggle="collapse" aria-expanded="false" aria-controls="ui-basic">
-                            <span class="menu-arrow">
+                            <span class="menu-arrow gh">
                                 <i class="mdi mdi-chevron-right"></i>
                             </span>
                         </a>
@@ -368,7 +454,7 @@
                                                         <a class="text-muted ellipsis mb-0"
                                                             style="font-size: 12px; font-weight: normal; cursor: pointer"
                                                             data-bs-toggle="modal"
-                                                            data-bs-target="#alasan-{{ $item->code }}">Kl   ik
+                                                            data-bs-target="#alasan-{{ $item->code }}">Kl ik
                                                             untuk melihat alasan</a>
                                                     @else
                                                         <p class="text-muted ellipsis mb-0 fw-light">
@@ -418,7 +504,7 @@
                                     style="display: flex; flex-direction: row; justify-content: center; align-items: center;">
                                     <img class="img-xs rounded-circle" style="object-fit: cover;"
                                         src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="">
-                                    <p class="mb-0 d-none d-sm-block navbar-profile-name">{{ auth()->user()->name }}
+                                    <p class="mb-0 d-none d-sm-block navbar-profile-name" style="width: 60px; overflow: hidden; text-overflow: ellipsis; height: 15px;">{{ auth()->user()->name }}
                                     </p>
                                 </div>
                                 <a href="{{ route('ubah.profile.artis', auth()->user()->code) }}"
@@ -432,7 +518,7 @@
                                         <p class="preview-subject mb-1 fw-light">Profile</p>
                                     </div>
                                 </a>
-                                <a class="dropdown-item preview-item" href="{{ route('logout.users') }}">
+                                <a class="dropdown-item preview-item" href="{{ route('logout.artis') }}">
                                     <div class="preview-thumbnail">
                                         <div class="preview-icon rounded-circle">
                                             <i class="mdi mdi-logout"></i>
@@ -455,6 +541,11 @@
             @include('sweetalert::alert')
             @yield('content')
 
+            {{-- <button id="playButton">Play</button>
+            <button id="pauseButton">Pause</button>
+            <input type="range" id="progress" min="0" value="0">
+            <span id="currentTime">0:00</span> / <span id="duration">0:00</span> --}}
+
             <div id="buat-album">
                 <div class="card window">
                     <div class="card-body">
@@ -467,12 +558,12 @@
                                 <div class="mb-3">
                                     <h3 class="form-label judul">Nama Album</h3>
                                     <input type="text" name="name" class="form-control" id="namaproyek"
-                                        placeholder="Masukkan nama kategori musik" maxlength="80" required>
+                                        placeholder="Masukkan nama kategori musik" maxlength="55" required>
                                 </div>
                                 <div class="mb-3">
                                     <h3 for="upload" class="form-label judul">Upload
                                         Foto</h3>
-                                    <input type="file" name="image" class="form-control" id="namaproyek"
+                                    <input type="file" name="image" class="form-control" id="namaproyek" accept="image/*"
                                         required>
                                 </div>
                             </div>
@@ -514,11 +605,13 @@
                 $(document).ready(function() {
                     $('#search_song').on('keyup', function() {
                         var query = $(this).val();
+                        var id = $('#album_id').val()
                         $.ajax({
                             url: '/artis/search_song/',
                             type: 'GET',
                             data: {
-                                query: query
+                                query: query,
+                                id: id,
                             },
                             dataType: 'json',
                             success: function(response) {
@@ -725,6 +818,7 @@
                 }
             </script>
 
+
             <script>
                 let previous = document.querySelector('#pre');
                 let play = document.querySelector('#play');
@@ -757,6 +851,102 @@
 
                 let All_song = [];
 
+                // const playButton = document.getElementById('playButton');
+                // const pauseButton = document.getElementById('pauseButton');
+                // const progress = document.getElementById('progress');
+                // const currentTime = document.getElementById('currentTime');
+                // const duration = document.getElementById('duration');
+
+                // function ambilDataLagu() {
+                // fetch('/ambil-lagu')
+                //     .then(response => response.json())
+                //     .then(data => {
+                //         All_song = data.map(lagu => {
+                //             return {
+                //                 id: lagu.id,
+                //                 judul: lagu.judul,
+                //                 audio: lagu.audio,
+                //                 image: lagu.image,
+                //                 artistId: lagu.artist.user.name
+                //             };
+                //         });
+                //         play_song()
+                //     })
+                //     .catch(error => {
+                //         console.error('Error fetching data:', error);
+                //     });
+                // // }
+
+                // function play_song() {
+                //     const audioUrls = All_song.map(song => song.audio);
+                //     console.log(audioUrls);
+                //     const sound = new Howl({
+                //         src: [
+                //             ['http://127.0.0.1:8000/storage/musics/h0dTC0RQfUHTqfgHm7ncF54rwjo83T94eBdv1pxQ.mp3']
+                //         ],
+                //         html5: true,
+                //         onplay: () => {
+                //             playButton.disabled = true;
+                //             pauseButton.disabled = false;
+                //         },
+                //         onpause: () => {
+                //             playButton.disabled = false;
+                //             pauseButton.disabled = true;
+                //         },
+                //         onend: () => {
+                //             playButton.disabled = false;
+                //             pauseButton.disabled = true;
+                //         },
+                //         onload: () => {
+                //             // The audio file is loaded, so we can update the duration
+                //             duration.textContent = formatTime(sound.duration());
+                //         },
+                //         onseek: () => {
+                //             updateUI();
+                //         }
+                //     });
+
+                //     playButton.addEventListener('click', () => {
+                //         sound.play();
+                //     });
+
+                //     pauseButton.addEventListener('click', () => {
+                //         sound.pause();
+                //     });
+
+                //     sound.on('play', () => {
+                //         // Start a timer to update the progress bar and current time
+                //         updateProgressInterval = setInterval(updateUI, 100);
+                //     });
+
+                //     sound.on('pause', () => {
+                //         // Clear the timer when paused
+                //         clearInterval(updateProgressInterval);
+                //     });
+
+                //     progress.addEventListener('input', () => {
+                //         const seekTime = (progress.value / 100) * sound.duration();
+                //         sound.seek(seekTime);
+                //         updateUI();
+                //     });
+
+                //     let updateProgressInterval;
+
+                //     function updateUI() {
+                //         const currentTimeValue = sound.seek();
+                //         const durationValue = sound.duration();
+
+                //         const percentage = (currentTimeValue / durationValue) * 100;
+                //         progress.value = isNaN(percentage) ? 0 : percentage;
+                //         currentTime.textContent = formatTime(currentTimeValue);
+                //     }
+
+                //     function formatTime(seconds) {
+                //         const minutes = Math.floor(seconds / 60);
+                //         const remainingSeconds = Math.floor(seconds % 60);
+                //         return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+                //     }
+                // }
 
                 async function ambilDataLagu() {
                     await fetch('/ambil-lagu')
@@ -893,7 +1083,6 @@
                         },
                         error: function(xhr, status, error) {
                             console.error('Error saat mengirim riwayat:', error);
-
                         }
                     });
                 }
@@ -954,7 +1143,6 @@
                     } else {
                         console.error('Lagu dengan ID ' + id + ' tidak ditemukan dalam data lagu.');
                     }
-
                 }
 
                 track.addEventListener('ended', function() {

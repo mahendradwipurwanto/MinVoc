@@ -29,6 +29,12 @@
             font-family: 'Poppins', sans-serif;
         }
 
+        .fixedbar {
+            position: fixed;
+            z-index: 1030;
+            width: 245px;
+        }
+
         .search-container {
             position: relative;
             display: flex;
@@ -167,6 +173,46 @@
             content: "\f004";
             color: #957DAD;
         }
+
+        /* CSS untuk styling pagination */
+        .pagination {
+            margin-top: 20px;
+        }
+
+        .page-item:first-child .page-link {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-radius: 10px;
+        }
+
+        .page-item:last-child .page-link {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-radius: 10px;
+        }
+
+        .pagination li {
+            display: inline;
+            margin-right: 5px;
+        }
+
+        .pagination li a {
+            text-decoration: none;
+            border-radius: 10px;
+        }
+
+        .page-link.active {
+            background-color: #957DAD;
+            border: 1px solid #957DAD;
+        }
+
+        .pagination li.active a {
+            color: #fff;
+        }
+
+        .pagination li:hover {
+            background-color: #ddd;
+        }
     </style>
     <script>
         // INI SCRIPT UNTUK HASIL SEARCH TAMPIL/TIDAK
@@ -193,7 +239,7 @@
                 <a class="sidebar-brand brand-logo" href="/pengguna/dashboard"><img src="/user/assets/images/logo.svg"
                         alt="logo" /></a>
             </div>
-            <ul class="nav">
+            <ul class="nav fixedbar">
                 <li class="nav-item menu-items">
                     <a class="nav-link" href="/pengguna/dashboard">
                         <span class="menu-icon ">
@@ -209,7 +255,7 @@
                         </span>
                         <span class="menu-title">Playlist</span>
                         <a href="#ui-basic" data-toggle="collapse" aria-expanded="false" aria-controls="ui-basic">
-                            <span class="menu-arrow">
+                            <span class="menu-arrow gh">
                                 <i class="mdi mdi-chevron-right"></i>
                             </span>
                         </a>
@@ -241,7 +287,7 @@
                                                     <i class="fas fa-pen fa-2x"></i>
                                                 </label>
                                                 <input type="file" id="gambarplaylist" name="images"
-                                                    accept="image/png,image/jpg" class="noob">
+                                                    accept="image/*" class="noob">
                                             </div>
                                         </div>
                                         <div class="col-md-7 ml-4">
@@ -324,7 +370,7 @@
                                 <div class="duration">
                                     <input type="range" class="progress" min="0" step="1"
                                         max="100" value="0" id="duration_slider"
-                                        onchange="change_duration()">
+                                        onchange="change_duration(this)">
                                 </div>
                             </div>
                             <span id="duration" class="durasi">00:00</span>
@@ -350,7 +396,9 @@
                 <div class="navbar-menu-wrapper flex-grow d-flex align-items-stretch">
                     <ul class="navbar-nav w-75">
                         <li class="nav-item w-75">
-                            <form class="nav-link mt-2 mt-md-0 d-none d-lg-flex search">
+                            <form class="nav-link mt-2 mt-md-0 d-none d-lg-flex search" method="POST"
+                                action="{{ route('pencarian') }}">
+                                @csrf
                                 <div class="input-group mb-3">
                                     <span class="input-group-text"
                                         style="border-radius: 15px 0px 0px 15px; border: 1px solid #eaeaea">
@@ -361,7 +409,7 @@
                                                 stroke="#957DAD" stroke-width="2" stroke-linecap="round" />
                                         </svg>
                                     </span>
-                                    <input type="text" id="search" class="form-control"
+                                    <input type="text" id="search" name="search" class="form-control"
                                         placeholder="cari di sini" style="border-radius: 0px 15px 15px 0px">
                                 </div>
                             </form>
@@ -431,8 +479,7 @@
                                         <img class="img-xs rounded-circle" style="object-fit: cover;"
                                             src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="">
                                     </div>
-                                    <p class="mb-0 d-none d-sm-block navbar-profile-name">{{ auth()->user()->name }}
-                                    </p>
+                                    <p class="mb-0 d-none d-sm-block navbar-profile-name" style="width: 60px; overflow: hidden; text-overflow: ellipsis; height: 15px;">{{ auth()->user()->name }}</p>
                                 </div>
                                 <a href="{{ route('ubah.profile', auth()->user()->code) }}"
                                     class="dropdown-item preview-item">
@@ -465,9 +512,10 @@
                 </div>
             </nav>
 
+            @include('sweetalert::alert')
             @yield('content')
 
-                @foreach ($notifs->reverse() as $item)
+            @foreach ($notifs->reverse() as $item)
                 <div class="modal fade" id="alasan-{{ $item->code }}" tabindex="-1"
                     aria-labelledby="exampleModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
@@ -791,26 +839,22 @@
                     });
                 }
 
-
+                ambilDataLagu();
 
                 // function load the track
                 function load_track(index_no) {
                     if (index_no >= 0 && index_no < All_song.length) {
-                        console.log("Index_no sebelum pemanggilan load_track:", index_no);
-
                         track.src = '{{ asset('storage') }}' + '/' + All_song[index_no].audio;
                         title.innerHTML = All_song[index_no].judul;
                         artist.innerHTML = All_song[index_no].artistId;
                         track_image.src = '{{ asset('storage') }}' + '/' + All_song[index_no].image;
                         track.load();
-
                         timer = setInterval(range_slider, 1000);
-                        console.log("Index_no sebelum pemanggilan load_track:", index_no);
                     } else {
                         console.error("Index_no tidak valid.");
                     }
                 }
-                ambilDataLagu();
+                load_track(0);
                 // semua function
 
                 // fungsi mute sound
@@ -825,9 +869,9 @@
                     }
                     updateMuteButtonIcon();
                 }
-                track.addEventListener('loadedmetadata', function() {
-                    slider.max = track.duration;
-                });
+                // track.addEventListener('loadedmetadata', function() {
+                //     slider.max = track.duration;
+                // });
 
 
                 // fungsi untuk memeriksa lagu diputar atau tidak
@@ -860,9 +904,9 @@
                     if (index_no >= 0 && index_no < All_song.length) {
                         // Perbarui playCount dengan songId yang sesuai
                         const songId = All_song[index_no].id;
+                        // history(songId);
                         console.log(All_song[index_no])
                         updatePlayCount(songId);
-                        history(songId);
 
                     }
                     track.addEventListener('timeupdate', updateDuration);
@@ -936,6 +980,7 @@
                     index_no = 0;
                     // Memuat lagu yang diacak
                     load_track(index_no);
+                    playsong();
                 }
 
 
@@ -969,7 +1014,6 @@
                 }
 
                 track.addEventListener('ended', function() {
-                    // Panggil fungsi untuk memutar lagu selanjutnya
                     next_song();
                 });
 
@@ -1010,9 +1054,11 @@
                 // ubah posisi slider
                 // Fungsi untuk mengubah posisi slider
                 function change_duration() {
-                    slider_position = track.duration * (slider.value / 100);
-                    track.currentTime = slider_position;
-                    console.log( slider_position = track.duration * (slider.value / 100));
+                    let slider_value = slider.value;
+                    if (!isNaN(track.duration) && isFinite(slider_value)) {
+                        track.currentTime = track.duration * (slider_value / 100);
+                        console.log(track.duration * (slider_value / 100), slider_value, track.currentTime)
+                    }
                 }
 
                 slider.addEventListener('input', function() {
@@ -1031,7 +1077,6 @@
                     if (!isNaN(track.duration)) {
                         position = track.currentTime * (100 / track.duration);
                         slider.value = position;
-                        // console.log(track.duration);
                     }
                     if (track.ended) {
                         play.innerHTML = '<i class="far fa-play-circle" aria-hidden="true"></i>';
@@ -1039,6 +1084,8 @@
                             index_no += 1;
                             load_track(index_no);
                             playsong();
+                            const songId = All_song[index_no].id;
+                            history(songId);
                         }
                     }
 

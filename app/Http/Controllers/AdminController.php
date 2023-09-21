@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\admin;
 use App\Models\artist;
+use App\Models\aturanPembayaran;
 use App\Models\billboard;
 use App\Models\genre;
 use App\Models\notif;
+use App\Models\opsiPembayaran;
+use App\Models\penghasilan;
 use App\Models\projects;
 use App\Models\song;
 use App\Models\User;
@@ -25,37 +28,144 @@ use Throwable;
 class AdminController extends Controller
 {
     use AuthAuthenticatable;
-    protected function index(): Response
+    protected function index(Request $request): Response
     {
         $title = "MusiCave";
         $totalPengguna = User::whereNotIn('id', [1, 2, 3])->count();
         $totalLagu = song::count();
         $totalArtist = artist::count();
         $songs = song::all();
-        $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('admin.dashboard', compact('title', 'totalPengguna', 'totalLagu', 'totalArtist', 'songs', 'notifs'));
+        $adminId = admin::where('id', 1)->first()->id;
+        $month = [];
+
+        for ($i = 1; $i <= 12; $i++) {
+            $totalPendapatan = admin::where('id', $adminId)
+                ->whereYear('created_at', date('Y'))
+                ->whereMonth('created_at', $i)
+                ->sum('penghasilan');
+            $month[] = $totalPendapatan;
+        }
+        return response()->view('admin.dashboard', compact('title', 'month', 'totalPendapatan', 'totalPengguna', 'totalLagu', 'totalArtist', 'songs'));
     }
     protected function persetujuan(): Response
     {
         $title = "MusiCave";
         $persetujuan = song::where('is_approved', false)->get();
-        $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('admin.persetujuan', compact('title', 'persetujuan', 'notifs'));
+        return response()->view('admin.persetujuan', compact('title', 'persetujuan'));
     }
     protected function show($id): Response
     {
         $title = "MusiCave";
         $show = song::findOrFail($id);
-        $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('admin.persetujuan', compact('title', 'show', 'notifs'));
+        return response()->view('admin.persetujuan', compact('title', 'show'));
+    }
+
+    protected function peraturan(Request $request)
+    {
+        $title = 'MusiCave';
+        $tipePembayaran = aturanPembayaran::with('opsi')->get();
+        $opsi = opsiPembayaran::all();
+        return response()->view('peraturanPembayaran', compact('title', 'opsi', 'tipePembayaran'));
+    }
+
+    // protected function listTipePembayaran()
+    // {
+    //     $datas = opsiPembayaran::all();
+    //     return response()->json(['datas' => $datas]);
+    // }
+
+    protected function items(string $code)
+    {
+        $data = aturanPembayaran::with('opsi')->where('code', $code)->first();
+        return response()->json(['data' => $data]);
+    }
+
+    protected function peraturanPembayaran(Request $request)
+    {
+        $validator = Validator::make($request->only('opsi', 'pembayaranArtis', 'pembayaranAdmin'), [
+            'opsi' => 'required|exists:opsi_pembayarans,id',
+            'pembayaranArtis' => 'required|integer|min:1',
+            'pembayaranAdmin' => 'required|integer|min:1',
+        ], [
+            'required' => 'Kolom :attribute harus diisi.',
+            'integer' => 'Kolom :attribute harus berupa angka.',
+            'min' => 'Kolom :attribute minimal harus :min.',
+            'exists' => 'Kolom :attribute yang dipilih tidak valid.',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $opsi = opsiPembayaran::where('id', $request->input('opsi'))->first();
+
+        aturanPembayaran::create([
+            'code' => Str::uuid(),
+            'opsi_id' => $opsi->id,
+            'pendapatanArtis' => $request->input('pembayaranArtis'),
+            'pendapatanAdmin' => $request->input('pembayaranAdmin'),
+        ]);
+        try {
+        } catch (\Throwable $th) {
+            Alert::error('message', 'Pengaturan pembayaran gagal dibuat');
+            return redirect()->back();
+        }
+        Alert::success('message', 'Pengaturan pembayaran berhasil dibuat');
+        return redirect()->back();
+    }
+
+    protected function deletePencairan(string $code)
+    {
+        $data = aturanPembayaran::where('code', $code)->first();
+        try {
+            $data->delete();
+        } catch (\Throwable $th) {
+            Alert::error('message', 'Aturan pembayaran gagal di hapus');
+        }
+        Alert::success('message', 'Aturan pembayaran berhasil di hapus');
+        return redirect()->back();
+    }
+
+    protected function updatePeraturanPembayaran(Request $request, string $code)
+    {
+        $validator = Validator::make($request->only('opsi', 'pembayaranArtis', 'pembayaranAdmin'), [
+            'pembayaranArtis' => 'required|integer|min:1',
+            'pembayaranAdmin' => 'required|integer|min:1',
+        ], [
+            'required' => 'Kolom :attribute harus diisi.',
+            'integer' => 'Kolom :attribute harus berupa angka.',
+            'min' => 'Kolom :attribute minimal harus :min.',
+            'exists' => 'Kolom :attribute yang dipilih tidak valid.',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            $opsi = opsiPembayaran::where('tipe', $request->input('opsi'))->first();
+            $aturan = aturanPembayaran::where('code', $code)->first();
+
+            $data = [
+                'opsi_id' => $opsi->id,
+                'pendapatanArtis' => $request->input('pembayaranArtis'),
+                'pendapatanAdmin' => $request->input('pembayaranAdmin'),
+            ];
+
+            $aturan->update($data);
+        } catch (\Throwable $th) {
+            Alert::error('message', 'Aturan pembayaran gagal di perbarui');
+            return redirect()->back();
+        }
+        Alert::success('message', 'Aturan pembayaran berhasil di perbarui');
+        return redirect()->back();
     }
 
     protected function kategori(): Response
     {
         $title = "MusiCave";
         $genres = genre::all();
-        $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('admin.kategori', compact('title', 'genres', 'notifs'));
+        return response()->view('admin.kategori', compact('title', 'genres'));
     }
 
     protected function iklan(): Response
@@ -63,31 +173,96 @@ class AdminController extends Controller
         $title = "MusiCave";
         $billboards = billboard::all();
         $artist = artist::where('is_verified', 1)->get();
-        $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('admin.iklan', compact('title', 'artist', 'billboards', 'notifs'));
+        return response()->view('admin.iklan', compact('title', 'artist', 'billboards'));
     }
 
     protected function riwayat(): Response
     {
         $title = "MusiCave";
         $songs = song::all();
-        $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('admin.riwayat', compact('title', 'songs', 'notifs'));
+        return response()->view('admin.riwayat', compact('title', 'songs'));
     }
 
     protected function pencairan(): Response
     {
         $title = "MusiCave";
-        $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('admin.pencairan', compact('title', 'notifs'));
+
+        $penghasilanAll = penghasilan::with('artist')
+            ->select('penghasilan.artist_id', DB::raw('MAX(penghasilan.Pengajuan_tanggal) as Pengajuan_tanggal'), DB::raw('MAX(penghasilan.is_submit) as is_submit'), DB::raw('MAX(penghasilan.penghasilanCair) as penghasilanCair'), DB::raw('MAX(penghasilan.id) as id'), DB::raw('SUM(penghasilan.penghasilan) as total_penghasilan'))
+            ->where('is_take', true)
+            ->join('artists', 'penghasilan.artist_id', '=', 'artists.id')
+            ->groupBy('penghasilan.artist_id')
+            ->get();
+        return response()->view('admin.pencairan', compact('title', 'penghasilanAll'));
+    }
+
+    protected function pencairanApprove(Request $request, string $code)
+    {
+        $penghasilanArtisId = penghasilan::where('id', $code)->first()->artist_id;
+        $id = artist::where('id', $penghasilanArtisId)->first();
+
+        if ($id) {
+            $penghasilan = penghasilan::where(function ($query) use ($code, $id) {
+                $query->where('is_take', true)->where('is_submit', false)
+                    ->Where('artist_id', $id->id);
+            })->get();
+        }
+
+        foreach ($penghasilan as $key) {
+            $data = [
+                'penghasilan' => 0,
+                'penghasilanCair' => $key->penghasilan,
+                'pengajuan' => 0,
+                'Pengajuan_tanggal' => now(),
+                'is_take' => false,
+                'is_submit' => true,
+                'terakhir_diambil' => now()
+            ];
+            notif::create([
+                'title' => 'pengajuan pencairan uang berhasil',
+                'message' => 'pengajuan pencairan uang telah di setujui oleh admin.',
+                'user_id' => $key->artist->user_id,
+            ]);
+            penghasilan::where('id', $key->id)->update($data);
+        }
+        try {
+        } catch (\Throwable $th) {
+            Alert::error('message', 'Pencairan gagal berhasil di kirim.');
+        }
+        Alert::success('message', 'Pencairan penghasilan berhasil di kirim.');
+        return redirect()->back();
+    }
+
+    protected function pencairanReject(Request $request, string $code)
+    {
+        try {
+            $penghasilan = penghasilan::where(function ($query) use ($code) {
+                $query->where('is_take', true)->where('is_submit', false)
+                    ->orWhere('id', $code);
+            })->get();
+
+            foreach ($penghasilan as $key) {
+                $data = [
+                    'penghasilan' => $key->penghasilan,
+                    'penghasilanCair' => 0,
+                    'Pengajuan' => 0,
+                    'Pengajuan_tanggal' => null,
+                    'is_take' => false
+                ];
+                penghasilan::where('id', $key->id)->update($data);
+            }
+        } catch (\Throwable $th) {
+            Alert::error('message', 'Pencairan penghasilan gagal di tolak.');
+        }
+        Alert::success('message', 'Pencairan penghasilan berhasil di tolak.');
+        return redirect()->back();
     }
 
     protected function verifikasi(): Response
     {
         $title = "MusiCave";
         $artist = artist::where('is_verified', 0)->get();
-        $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('admin.verifikasi', compact('title', 'artist', 'notifs'));
+        return response()->view('admin.verifikasi', compact('title', 'artist'));
     }
 
     protected function setujuMusic(string $code)
@@ -96,7 +271,8 @@ class AdminController extends Controller
         $song = song::where('code', $code)->first();
         $artis = artist::where('id', $song->artis_id)->first();
         $user = User::where('id', $artis->user_id)->first();
-
+        $pengahasilan = aturanPembayaran::where('opsi_id', 2)->first();
+        $pengahasilanAdmin = aturanPembayaran::where('opsi_id', 2)->first();
         $data = [
             'artis_id' => $song->artis_id,
             'title' => $song->judul,
@@ -104,17 +280,40 @@ class AdminController extends Controller
             'is_reject' => false
         ];
         notif::create($data);
+        $song->is_approved = true;
+        $song->update();
+        $persetujuan = song::all();
+        $notifs = notif::where('user_id', auth()->user()->id)->get();
+        
+        $admin = admin::where('user_id', 1)->first();
+        $penghasilanSaatIni = $admin->penghasilan;
+
+        $jumlahTambahan = 2000;
+
+        $penghasilanBaru = $penghasilanSaatIni + $jumlahTambahan;
+
+        $admin->update(['penghasilan' => $penghasilanBaru]);
+
+        if (isset($pengahasilan) == null) {
+            $penghasilanArtist = (int) $artis->penghasilan + 20000;
+        } else {
+            $penghasilanArtist = (int) $artis->penghasilan + $pengahasilan->pendapatanArtis ? $pengahasilan->pendapatanArtis : 20000;
+        }
+        artist::findOrFail($artis->id)->update(['penghasilan' => $penghasilanArtist]);
+        $artis->update(['penghasilan' => $penghasilanArtist]);
+        penghasilan::create([
+            'artist_id' => $artis->id,
+            'penghasilan' => isset($pengahasilan->pendapatanArtis) != null ? $pengahasilan->pendapatanArtis : 20000,
+            'status' => "unggah lagu",
+            'bulan' => now()->format('m'),
+        ]);
         try {
-            $song->is_approved = true;
-            $song->update();
-            $persetujuan = song::all();
-            $notifs = notif::where('user_id', auth()->user()->id)->get();
         } catch (\Throwable $th) {
             Alert::error('message', 'Lagu Gagal Dalam Perizinan Publish');
-            return response()->redirectTo('/admin/persetujuan')->with(['persetujuan' => $persetujuan, 'title' => $title, 'notifs' => $notifs]);
+            return response()->redirectTo('/admin/persetujuan')->with(['persetujuan' => $persetujuan, 'title' => $title]);
         }
         Alert::success('message', 'Lagu Berhasil Publish');
-        return response()->redirectTo('/admin/persetujuan')->with(['persetujuan' => $persetujuan, 'title' => $title, 'notifs' => $notifs]);
+        return response()->redirectTo('/admin/persetujuan')->with(['persetujuan' => $persetujuan, 'title' => $title]);
     }
 
     protected function buatBillboard(Request $request)
@@ -161,7 +360,7 @@ class AdminController extends Controller
             $billboards = billboard::all();
         } catch (\Throwable $th) {
             Alert::error('message', 'Gagal Untuk Menambah Billboard');
-            return response()->view('admin.iklan', compact('artist', 'title', 'notifs'));
+            return response()->view('admin.iklan', compact('artist', 'title'));
         }
 
         Alert::success('message', 'Berhasil Untuk Menambah Billboard');
@@ -179,7 +378,7 @@ class AdminController extends Controller
         // Validasi input sesuai kebutuhan
         $this->validate($request, [
             'artis_id' => 'required|exists:artists,id',
-            'deskripsi' => 'required|string|max:250',
+            // 'deskripsi' => 'required|string|max:250',
             'image_background' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'image_artis' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
@@ -220,7 +419,7 @@ class AdminController extends Controller
         }
 
         if ($billboard->save()) {
-         
+
             Alert::success('message', 'Berhasil Untuk Memperbarui Billboard');
             return redirect()->back()->with('success', 'Billboard updated successfully.');
         } else {
@@ -234,10 +433,11 @@ class AdminController extends Controller
         $validator = Validator::make(
             $request->only('name', 'images'),
             [
-                'name' => 'required|unique:admins,name|string|max:50',
+                'name' => 'unique:genres,name|string|max:50',
                 'images' => 'mimes:jpeg,jpg,png,gif|required|max:10000',
             ],
             [
+                'name.unique' => 'Nama genre sudah terpakai.',
                 'images.mimes' => 'File gambar harus berupa JPEG, JPG, PNG, atau GIF.',
                 'images.required' => 'File gambar harus diunggah.',
                 'images.max' => 'Ukuran file gambar tidak boleh melebihi 10MB.',
@@ -253,7 +453,7 @@ class AdminController extends Controller
                 // Start a database transaction
                 DB::beginTransaction();
 
-                $genre = new genre();
+                $genre = new Genre();
                 $genre->code = Str::uuid();
                 $genre->name = $request->input('name');
 
@@ -270,16 +470,17 @@ class AdminController extends Controller
 
                 Alert::success('message', 'Berhasil Membuat Genre');
                 return redirect()->back()->with('success', 'Genre created successfully.');
-            } catch (\Throwable $genre) {
+            } catch (\Throwable $e) {
                 DB::rollBack();
-                Log::error('Terjadi kesalahan saat membuat genre: ' . $genre->getMessage());
+                Log::error('Terjadi kesalahan saat membuat genre: ' . $e->getMessage());
 
                 Alert::error('message', 'Gagal Membuat Genre');
                 return redirect()->back()->with('error', 'Gagal membuat genre.');
             }
-
         }
     }
+
+
     public function editGenre(Request $request, string $code)
     {
         $genre = genre::find($code);
@@ -288,14 +489,16 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Genre not found.');
         }
 
-        $validator = $request->validate([
-            'name' => 'required|string|max:50',
-            'images' => 'image|mimes:jpeg,jpg,png,gif|max:10000', // Menggunakan "image" sebagai aturan validasi
-        ],
-        [
-            'images.mimes' => 'File gambar harus berupa JPEG, JPG, PNG, atau GIF.',
-            'images.max' => 'Ukuran file gambar tidak boleh melebihi 10MB.',
-        ]);
+        $validator = $request->validate(
+            [
+                'name' => 'required|string|max:50',
+                'images' => 'image|mimes:jpeg,jpg,png,gif|max:10000', // Menggunakan "image" sebagai aturan validasi
+            ],
+            [
+                'images.mimes' => 'File gambar harus berupa JPEG, JPG, PNG, atau GIF.',
+                'images.max' => 'Ukuran file gambar tidak boleh melebihi 10MB.',
+            ]
+        );
 
         try {
             if ($request->hasFile('images')) {
@@ -310,11 +513,11 @@ class AdminController extends Controller
 
             $genre->name = $request->input('name');
             $genre->save();
-            Alert::success('success','Berhasil Mengedit Genre');
+            Alert::success('success', 'Berhasil Mengedit Genre');
             return redirect()->back()->with('success', 'Genre updated successfully.');
         } catch (\Throwable $th) {
             Log::error('Error editing genre: ' . $th->getMessage());
-            Alert::error('error','Gagal Mengedit Genre');
+            Alert::error('error', 'Gagal Mengedit Genre');
             return redirect()->back()->with('error', 'Failed to edit genre.');
         }
     }

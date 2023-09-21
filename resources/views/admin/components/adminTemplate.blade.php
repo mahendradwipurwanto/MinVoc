@@ -12,11 +12,17 @@
     <link rel="stylesheet" href="assets/vendors/mdi/css/materialdesignicons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/admin/assets/css/style.css" />
-    <link rel="stylesheet" href="{{ asset('style.css')}}" />
+    <link rel="stylesheet" href="{{ asset('style.css') }}" />
     <link rel="shortcut icon" href="/image/favicon.svg" />
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        .fixedbar {
+            position: fixed;
+            z-index: 1030;
+            width: 245px;
+        }
+
         .search-container {
             position: relative;
             display: flex;
@@ -54,7 +60,47 @@
             color: #7c6890;
         }
     </style>
+    <style>
+        /* CSS untuk styling pagination */
+        .pagination {
+            margin-top: 20px;
+        }
 
+        .page-item:first-child .page-link {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-radius: 10px;
+        }
+
+        .page-item:last-child .page-link {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-radius: 10px;
+        }
+
+        .pagination li {
+            display: inline;
+            margin-right: 5px;
+        }
+
+        .pagination li a {
+            text-decoration: none;
+            border-radius: 10px;
+        }
+
+        .page-link.active {
+            background-color: #957DAD;
+            border: 1px solid #957DAD;
+        }
+
+        .pagination li.active a {
+            color: #fff;
+        }
+
+        .pagination li:hover {
+            background-color: #ddd;
+        }
+    </style>
     <script>
         function confirmDelete(message, callback) {
             Swal.fire({
@@ -102,7 +148,7 @@
                 <a class="sidebar-brand brand-logo" href="index.html"><img src="assets/images/logo.svg"
                         alt="logo" /></a>
             </div>
-            <ul class="nav">
+            <ul class="nav fixedbar">
                 <li class="nav-item menu-items">
                     <a class="nav-link" href="/admin/dashboard">
                         <span class="menu-icon ">
@@ -143,7 +189,7 @@
                     <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false"
                         aria-controls="ui-basic">
                         <span class="menu-icon">
-                            <i class="mdi mdi-music"></i>
+                            <i class="mdi mdi-format-list-bulleted-type"></i>
                         </span>
                         <span class="menu-title">Kategori</span>
                         <i class="menu-arrow"></i>
@@ -154,7 +200,7 @@
                                 <a class="nav-link" href="/admin/kategori">
                                     <span class="menu-icon mr-0">
                                         <i class="mdi mdi-plus-circle-outline submenu" style="font-size: 20px;"></i>
-                                    </span>Kategori
+                                    </span>Genre
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -176,6 +222,15 @@
                     </a>
                 </li>
                 <li class="nav-item menu-items">
+                    <a class="nav-link" href="/admin/peraturan-pencairan">
+                        <span class="menu-icon">
+                            {{-- <i class="mdi mdi-cog"></i> --}}
+                            <i class="mdi mdi-cogs"></i>
+                        </span>
+                        <span class="menu-title">Pembayaran</span>
+                    </a>
+                </li>
+                <li class="nav-item menu-items">
                     <a class="nav-link" href="/admin/riwayat">
                         <span class="menu-icon">
                             <i class="mdi mdi-clock-outline"></i>
@@ -185,86 +240,65 @@
                 </li>
             </ul>
             <footer
-            style="background-color: #6c6c6c; color: #957DAD; width: 100%; position: fixed; bottom: 0; height: 85px;"
-            id="lagu-diputar">
-            <div class="music-player">
-                <div class="song-bar">
-                    <div class="song-infos">
-                        <div class="image-container1">
-                            <img src="https://d2y6mqrpjbqoe6.cloudfront.net/image/upload/f_auto,q_auto/media/library-400/216_636967437355378335Your_Lie_Small_hq.jpg"
-                                alt="" id="track_image" />
-                        </div>
-                        <div class="song-description">
-                            <p id="title">
-                                Watashitachi
-                            </p>
-                            <p id="artist">Masaru Yokoyama</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="progress-controller">
-                    <div class="control-buttons">
-                        <div id="controls">
-                            <button onclick="previous_song()" id="pre"><i class="fa fa-step-backward"
-                                    aria-hidden="true"></i></button>
-                            <button onclick="justplay()" id="play"><i class="far fa-play-circle fr"
-                                    aria-hidden="true"></i></button>
-                            <button onclick="next_song()" id="next"><i class="fa fa-step-forward"
-                                    aria-hidden="true"></i></button>
-                        </div>
-                    </div>
-                    <div class="progress-container">
-                        <span id="current-time" class="durasi">00:00</span>
-                        <div class="progress-bar">
-                            <div class="duration">
-                                <input type="range" class="progress" min="0" step="1" max="100"
-                                    value="0" id="duration_slider" onchange="change_duration()">
+                style="background-color: #6c6c6c; color: #957DAD; width: 100%; position: fixed; bottom: 0; height: 85px;"
+                id="lagu-diputar">
+                <div class="music-player">
+                    <div class="song-bar">
+                        <div class="song-infos">
+                            <div class="image-container1">
+                                <img src="https://d2y6mqrpjbqoe6.cloudfront.net/image/upload/f_auto,q_auto/media/library-400/216_636967437355378335Your_Lie_Small_hq.jpg"
+                                    alt="" id="track_image" />
+                            </div>
+                            <div class="song-description">
+                                <p id="title">
+                                    Watashitachi
+                                </p>
+                                <p id="artist">Masaru Yokoyama</p>
                             </div>
                         </div>
-                        <span id="duration" class="durasi">00:00</span>
+                    </div>
+                    <div class="progress-controller">
+                        <div class="control-buttons">
+                            <div id="controls">
+                                <button onclick="previous_song()" id="pre"><i class="fa fa-step-backward"
+                                        aria-hidden="true"></i></button>
+                                <button onclick="justplay()" id="play"><i class="far fa-play-circle fr"
+                                        aria-hidden="true"></i></button>
+                                <button onclick="next_song()" id="next"><i class="fa fa-step-forward"
+                                        aria-hidden="true"></i></button>
+                            </div>
+                        </div>
+                        <div class="progress-container">
+                            <span id="current-time" class="durasi">00:00</span>
+                            <div class="progress-bar">
+                                <div class="duration">
+                                    <input type="range" class="progress" min="0" step="1"
+                                        max="100" value="0" id="duration_slider"
+                                        onchange="change_duration()">
+                                </div>
+                            </div>
+                            <span id="duration" class="durasi">00:00</span>
+                        </div>
+                    </div>
+
+                    <div class="other-features">
+                        <div class="volume-bar">
+                            <i class="mdi mdi-volume-high " onclick="mute_sound()" aria-hidden="true"
+                                id="volume_icon"></i>
+                            <input type="range" class="volume" min="0" max="100" step="1"
+                                value="100" onchange="volume_change()" id="volume">
+                            <p id="volume_show">100</p>
+
+                        </div>
                     </div>
                 </div>
-
-                <div class="other-features">
-                    <div class="volume-bar">
-                        <i class="mdi mdi-volume-high " onclick="mute_sound()" aria-hidden="true"
-                            id="volume_icon"></i>
-                        <input type="range" class="volume" min="0" max="100" step="1"
-                            value="100" onchange="volume_change()" id="volume">
-                        <p id="volume_show">100</p>
-
-                    </div>
-                </div>
-            </div>
-        </footer>
+            </footer>
         </nav>
         <!-- partial -->
         <div class="container-fluid page-body-wrapper">
             <nav class="navbar p-0 fixed-top d-flex flex-row">
                 <div class="navbar-menu-wrapper flex-grow d-flex align-items-stretch">
                     <ul class="navbar-nav navbar-nav-right">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#"
-                                data-toggle="dropdown">
-                                <i class="mdi mdi-bell"></i>
-                                @if (count($notifs) > 0)
-                                    <span class="count bg-danger"></span>
-                                @endif
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list"
-                                aria-labelledby="notificationDropdown">
-                                @foreach ($notifs as $item)
-                                    @if ($item)
-                                        <a href="#" class="dropdown-item preview-item">
-                                            <div class="preview-item-content">
-                                                <p class="preview-subject mb-1">{{ $item->title }}</p>
-                                                <p class="text-muted ellipsis mb-0">{{ $item->message }}</p>
-                                            </div>
-                                        </a>
-                                    @endif
-                                @endforeach
-                            </div>
-                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link" id="profileDropdown" href="#" data-toggle="dropdown">
                                 <div class="navbar-profile">
@@ -280,7 +314,7 @@
                                         src="https://cdn.pnghd.pics/data/815/profil-wa-kosong-28.jpg" alt="">
                                     <p class="mb-0 d-none d-sm-block navbar-profile-name">Admin</p>
                                 </div>
-                                <a class="dropdown-item preview-item" href="{{ route('logout.users') }}">
+                                <a class="dropdown-item preview-item" href="{{ route('logout.admin') }}">
                                     <div class="preview-thumbnail">
                                         <div class="preview-icon rounded-circle">
                                             <i class="mdi mdi-logout"></i>
@@ -316,7 +350,7 @@
                 let slider = document.querySelector('#duration_slider');
                 let show_duration = document.querySelector('#show_duration');
                 let track_image = document.querySelector('#track_image');
-
+                let shuffleButton = document.querySelector('#shuffle_button');
                 let auto_play = document.querySelector('#auto');
 
                 let timer;
@@ -333,8 +367,8 @@
 
                 let All_song = [];
 
-                async function ambilDataLagu() {
-                    await fetch('/ambil-lagu')
+                function ambilDataLagu() {
+                    fetch('/ambil-lagu')
                         .then(response => response.json())
                         .then(data => {
                             All_song = data.map(lagu => {
@@ -474,9 +508,6 @@
                         }
                     });
                 }
-
-
-
 
                 // pause song
                 function pausesong() {

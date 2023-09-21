@@ -6,6 +6,7 @@ use App\Models\album;
 use App\Models\artist;
 use App\Models\billboard;
 use App\Models\genre;
+use App\Models\Like;
 use App\Models\notif;
 use App\Models\playlist;
 use App\Models\Riwayat;
@@ -21,20 +22,22 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Mockery\Undefined;
+use RealRashid\SweetAlert\Facades\Alert;
 use Throwable;
 
 class penggunaController extends Controller
 {
-    protected function index(): Response
+    protected function index(Request $request): Response
     {
         $title = "MusiCave";
+        $song = song::where('didengar','>','10')->orderByDesc('didengar')->get();
         $songs = song::all();
         $genres = genre::all();
         $playlists = playlist::all();
         $artist = artist::with('user')->get();
         $billboards = billboard::all();
         $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('users.index', compact('title', 'songs', 'artist', 'genres', 'playlists', 'billboards', 'notifs'));
+        return response()->view('users.index', compact('title', 'songs','song', 'artist', 'genres', 'playlists', 'billboards', 'notifs'));
     }
 
     protected function pencarian(): Response
@@ -70,11 +73,10 @@ class penggunaController extends Controller
         return response()->view('users.riwayat', compact('title', 'uniqueRows', 'notifs'));
     }
 
-    protected function profile(): Response
+    protected function profile(string $code)
     {
-        $title = "MusiCave";
-        $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('users.profile.profile', compact('title', 'notifs'));
+        $user = User::where('id', $code)->first();
+        return response()->json(['user' => $user]);
     }
 
     protected function profile_ubah(Request $request, string $code): Response
@@ -130,7 +132,7 @@ class penggunaController extends Controller
         } catch (\Throwable $th) {
             return abort(404);
         }
-        return back();
+        return redirect()->back();
     }
 
     protected function storePlaylist(Request $request)
@@ -162,7 +164,8 @@ class penggunaController extends Controller
         } catch (\Throwable $th) {
             return abort(404);
         }
-        return response()->view('users.playlist', compact('title', 'playlists', 'notifs'));
+        return redirect()->back();
+        // return response()->view('users.playlist', compact('title', 'playlists', 'notifs'));
     }
 
     protected function ubahPlaylist(Request $request, string $code)
@@ -199,7 +202,7 @@ class penggunaController extends Controller
         } catch (\Throwable $th) {
             return abort(404);
         }
-        return response()->view('users.playlist', compact('title', 'playlists', 'notifs'));
+        return redirect()->back();
     }
 
     protected function hapusSongPlaylist(string $code)
@@ -237,7 +240,7 @@ class penggunaController extends Controller
         } else if ($user) {
             $artis = artist::where('user_id', $user->id)->first();
             $songs = song::where('artis_id', $artis->id)->get();
-            return view('users.search.artisSearch', compact('user', 'title','totalDidengar', 'songs', 'playlists', 'notifs'));
+            return view('users.search.artisSearch', compact('user', 'title', 'totalDidengar', 'songs', 'playlists', 'notifs'));
         } else {
             return abort(404);
         }
@@ -249,14 +252,15 @@ class penggunaController extends Controller
         $playlists = playlist::all();
         $song = song::where('judul', 'like', '%' .  $request->input('search') . '%')->first();
         $user = user::where('name', 'like', '%' .  $request->input('search') . '%')->first();
-        $notifs = notif::where('user_id', auth()->user()->id)->get();
 
         if ($song) {
             $songs = song::all();
+            $notifs = notif::where('user_id', auth()->user()->id)->get();
             return view('users.search.songSearch', compact('song', 'title', 'songs', 'playlists', 'notifs'));
         } else if ($user) {
             $artis = artist::where('user_id', $user->id)->first();
             $songs = song::where('artis_id', $artis->id)->get();
+            $notifs = notif::where('user_id', auth()->user()->id)->get();
             return view('users.search.artisSearch', compact('user', 'title', 'songs', 'playlists', 'notifs'));
         } else {
             return abort(404);
@@ -284,6 +288,7 @@ class penggunaController extends Controller
             $title = "MusiCave";
             $playlistDetail = playlist::where('code', $code)->first();
             $songs = song::where('playlist_id', $playlistDetail->id)->get();
+            $notifs = notif::where('user_id', auth()->user()->id)->get();
             $playlists = playlist::all();
         } catch (\Throwable $th) {
             return abort(404);
@@ -302,7 +307,7 @@ class penggunaController extends Controller
         } catch (\Throwable $th) {
             return abort(404);
         }
-        return response()->view('artis.billboard.album', compact('title', 'album', 'songs', 'playlists', 'notifs'));
+        return response()->view('users.billboard.album', compact('title', 'album', 'songs', 'playlists', 'notifs'));
     }
 
     function detailAlbum(string $code): Response
@@ -322,8 +327,10 @@ class penggunaController extends Controller
     protected function disukaiPlaylist(): Response
     {
         $title = "MusiCave";
+        $songId = Like::where('user_id', Auth::user()->id)->pluck('song_id')->toArray();
+        $song =song::whereIn('id',$songId)->get();
         $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('users.playlist.disukai', compact('title', 'notifs'));
+        return response()->view('users.playlist.disukai', compact('title','song', 'notifs'));
     }
 
     protected function updateProfile(string $code, Request $request)
@@ -435,8 +442,10 @@ class penggunaController extends Controller
         try {
             User::where('code', $code)->update($value);
         } catch (Throwable $e) {
-            return abort(404);
+            Alert::error('message', 'Profile gagal di perbarui');
+            return redirect()->back();
         }
+        Alert::success('message', 'Profile berhasil di perbarui');
         return redirect()->back();
     }
 
@@ -458,6 +467,7 @@ class penggunaController extends Controller
 
         $users = User::where('name', 'LIKE', '%' . $query . '%')
             ->where('role_id', '!=', 3)
+            ->where('role_id', '!=', 4)
             ->get();
 
         try {
@@ -480,6 +490,10 @@ class penggunaController extends Controller
         }
 
         try {
+            foreach ($songs as $key) {
+                $key->playlist_id = null;
+                $key->update();
+            }
             if (Storage::disk('public')->exists($playlist->images) === 'images/defaultPlaylist.png') {
                 Storage::disk('public')->delete($playlist->images);
                 $playlist->delete();
@@ -517,6 +531,7 @@ class penggunaController extends Controller
 
     protected function logout(Request $request)
     {
+        User::where('id', auth()->user()->id)->update(['is_login' => false]);
         try {
             Auth::logout();
         } catch (\Throwable $th) {

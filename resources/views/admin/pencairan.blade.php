@@ -9,6 +9,70 @@
                 border: none;
             }
         </style>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const confirmButtonRejects = document.querySelectorAll('.confirmButtonReject');
+
+                confirmButtonRejects.forEach(confirmButtonReject => {
+
+                    confirmButtonReject.addEventListener('click', function(event) {
+                        event.preventDefault(); // Mencegah pengiriman formulir langsung
+                        const itemCode = this.getAttribute('data-item');
+                        const tableRow = this.closest('tr');
+                        Swal.fire({
+                            title: 'Konfirmasi Hapus',
+                            text: 'Apakah Anda yakin ingin menolak pengajuan pencairan ini?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Ya, Hapus!',
+                            cancelButtonText: 'Batal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Jika pengguna mengonfirmasi, kirimkan formulir
+                                const form = event.target.closest('form');
+                                if (form) {
+                                    form.submit();
+                                }
+                            }
+                        });
+                    });
+                });
+            });
+        </script>
+        @foreach ($penghasilanAll as $item)
+            <div class="modal fade" id="detail-{{ $item->id }}" data-bs-backdrop="static" data-bs-keyboard="false"
+                tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0" style="background-color: white">
+                        <div class="modal-header border-0">
+                            <h1 class="modal-title fs-5 judul" id="staticBackdropLabel">Detail</h1>
+                            <button type="button" class="btn-unstyled" data-bs-dismiss="modal" aria-label="Close">
+                                <i class="mdi mdi-close-circle-outline btn-icon"
+                                    style="color: #957DAD; font-size: 20px;"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body border-0">
+                            <div class="col-md-12" style="font-size: 13px">
+                                <div class="mb-3">
+                                    <p for="namakategori" class="form-label judulnottebal">Total Penghasilan</p>
+                                    <h3 class="judul">Rp. {{ number_format($item->total_penghasilan, 2, ',', '.') }}</h3>
+                                </div>
+                                <div class="mb-3">
+                                    <p for="konsep" class="form-label judulnottebal">Tanggal Pengajuan</p>
+                                    <p class="muted">{{ (new DateTime($item->Pengajuan_tanggal))->format('d F Y') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn rounded-3">
+                                <a href="/admin/satuju-pencairan/{{ $item->id }}" class="btn-link"
+                                    style="color: inherit; text-decoration: none;">Setujui</a></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
         <div class="content-wrapper">
             <div class="col-lg-12 grid-margin stretch-card">
                 <h3 class="judul mb-3">Pencairan Penghasilan</h3>
@@ -23,60 +87,54 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr class="table-row baris">
-                                <td class="table-cell">
-                                    <p>Tulus</p>
-                                </td>
-                                <td class="table-cell">03/12/2023</td>
-                                <td class="table-cell text-success">Rp 500.000</td>
-                                <td class="table-cell">
-                                    <button class="btn btnicon" data-bs-toggle="modal" data-bs-target="#detail">
-                                        <i class="far fa-eye text-info"></i>
-                                    </button>
-                                    <button class="btn btnicon" onclick="">
-                                        <i class="far fa-times-circle text-danger"></i>
-                                    </button>
-                                </td>
-                            </tr>
+                            @foreach ($penghasilanAll as $item)
+                                @if ($item->total_penghasilan > 0 || $item->is_submit == false)
+                                    <tr class="table-row baris">
+                                        <td class="table-cell">
+                                            <p>{{ $item->artist->user->name }}</p>
+                                        </td>
+                                        <td class="table-cell">
+                                            {{ (new DateTime($item->Pengajuan_tanggal))->format('d F Y') }}</td>
+                                        <td class="table-cell text-success">Rp.
+                                            {{ number_format($item->total_penghasilan, 2, ',', '.') }}</td>
+                                        <td class="table-cell">
+                                            <button class="btn btnicon" data-bs-toggle="modal"
+                                                data-bs-target="#detail-{{ $item->id }}">
+                                                <i class="far fa-eye text-info"></i>
+                                            </button>
+                                            <button class="btn btnicon confirmButtonReject" type="submit">
+                                                <form method="GET" action="/admin/pencairan-reject/{{ $item->id }}">
+                                                    @csrf
+                                                    <i class="far fa-times-circle text-danger"></i>
+                                                </form>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
-                {{-- @if (count($persetujuan) === 0) --}}
-                <div style="justify-content: center; display: flex; padding: 50px 0;">
-                    <img width="400" height="200" src="/icon-notFound/adminIcon.svg" alt="" srcset="">
-                </div>
-                {{-- @endif --}}
-                {{-- <div class="modal fade" id="detail" data-bs-backdrop="static" data-bs-keyboard="false"
-                    tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content border-0" style="background-color: white">
-                            <div class="modal-header border-0">
-                                <h1 class="modal-title fs-5 judul" id="staticBackdropLabel">Detail</h1>
-                                <button type="button" class="btn-unstyled" data-bs-dismiss="modal" aria-label="Close">
-                                    <i class="mdi mdi-close-circle-outline btn-icon" style="color: #957DAD; font-size: 20px;"></i>
-                                </button>
-                            </div>
-                            <div class="modal-body border-0">
-                                <div class="col-md-12" style="font-size: 13px">
-                                    <div class="mb-3">
-                                        <p for="namakategori" class="form-label judulnottebal">Total Penghasilan</p>
-                                        <h3 class="judul">Rp20.000.000</h3>
-                                    </div>
-                                    <div class="mb-3">
-                                        <p for="konsep" class="form-label judulnottebal">Jumlah Pencairan</p>
-                                        <p class="muted">Rp 20.000.000</p>
-                                    </div>
-                                </div>
-            
-                            </div>
-                            <div class="modal-footer border-0">
-                                <button type="button" class="btn rounded-3">
-                                    <a href="" class="btn-link"
-                                        style="color: inherit; text-decoration: none;">Setujui</a></button>
-                            </div>
-                        </div>
+                @php
+                    $total_penghasilan = $penghasilanAll
+                        ->filter(function ($item) {
+                            return $item->total_penghasilan > 1;
+                        })
+                        ->count();
+                @endphp
+                @php
+                    $penghasilanCair = $penghasilanAll
+                        ->filter(function ($item) {
+                            return $item->is_submit == true;
+                        })
+                        ->count();
+                @endphp
+
+                @if (empty($total_penghasilan) && empty($penghasilanCair))
+                    <div style="justify-content: center; display: flex; padding: 50px 0;">
+                        <img width="400" height="200" src="/icon-notFound/adminIcon.svg" alt="" srcset="">
                     </div>
-                </div> --}}
+                @endIf
 
                 <div class="text-center">
                     <div class="text-center">

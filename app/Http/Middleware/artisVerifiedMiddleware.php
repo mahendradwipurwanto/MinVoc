@@ -18,7 +18,6 @@ class artisVerifiedMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check() && auth()->user()->role_id === 1) {
-            // Cache::put('status_persetujuan_' . auth()->user()->id, 'belum_disetujui', now()->addHours(24));
             return $next($request);
         }
         return response()->redirectTo('/masuk')->with('message', 'Anda Tidak Mendapatkan Akses Untuk Halaman Ini.');

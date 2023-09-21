@@ -13,9 +13,16 @@ return new class extends Migration
     {
         Schema::create('penghasilan', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('artist_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();
-            $table->bigInteger('penghasilan');
+            $table->foreignId('artist_id')->nullable()->constrained()->cascadeOnDelete()->cascadeOnUpdate();
+            $table->bigInteger('penghasilan')->default(0);
+            $table->bigInteger('penghasilanCair')->default(0);
+            $table->bigInteger('Pengajuan')->default(0);
+            $table->boolean('is_take')->default(false);
+            $table->boolean('is_submit')->default(false);
             $table->string('bulan');
+            $table->string('status')->nullable();
+            $table->timestamp('Pengajuan_tanggal')->nullable();
+            $table->timestamp("terakhir_diambil")->nullable();
             $table->timestamps();
         });
     }

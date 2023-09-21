@@ -76,6 +76,10 @@
                 cursor: pointer;
             }
 
+            #range {
+                accent-color: #957dad;
+            }
+
             .range-wrap {
                 width: 450px;
                 position: relative;
@@ -155,11 +159,14 @@
                         position: absolute;
                         bottom: 0;
                         left: 0;
-                        right: 10px;
+                        right: 0;
                         padding: 10px;
                         display: flex;
                         align-items: center;
                         background-color: white;
+                        background-color: white;
+                        border-radius: 10px;
+                        border: 1px solid #c9c9c9;
                     }
 
                     .chat-message.sent {
@@ -242,7 +249,7 @@
 
                     label {
                         display: flex;
-                        /* justify-content: center; */
+                        justify-content: center;
                         align-items: center;
                         cursor: pointer;
                         width: 100%;
@@ -289,33 +296,62 @@
                                                 @csrf
                                                 <div class="row">
                                                     <div class="col-5 pr-0">
-                                                        <div class="card cobai mb-3">
+                                                        <div class="card cobai">
                                                             <label for="gambar" id="tampil_gambar">
                                                                 <i class="fas fa-pen fa-2x"></i>
                                                             </label>
                                                             <input type="file" id="gambar" name="images"
                                                                 accept="image/png,image/jpg" class="inputgambar">
                                                         </div>
+                                                        @if ($errors->has('images'))
+                                                            <div class="text-danger" style="font-size: 12px;">
+                                                                {{ $errors->first('images') }}
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                     <div class="col-7">
                                                         <div class="mb-4">
                                                             <input type="text" class="form-control form-i inputcolor"
-                                                                name="name" id="nama" placeholder="Judul Lagu">
+                                                                name="name" id="nama" placeholder="Judul Lagu"
+                                                                value="{{ old('name') }}" maxlength="55">
+                                                            @if ($errors->has('name'))
+                                                                <div class="text-danger" style="font-size: 12px">
+                                                                    {{ $errors->first('name') }}
+                                                                </div>
+                                                            @endif
                                                         </div>
-                                                        <div class="mb-4">
+                                                        <div class="my-3">
                                                             <input type="file" name="audio"
-                                                                class="form-control inputcolor" id="namaproyek" required>
+                                                                class="form-control inputcolor" id="namaproyek" required
+                                                                value="{{ old('audio') }}">
+                                                            @if ($errors->has('audio'))
+                                                                <div class="text-danger" style="font-size: 12px">
+                                                                    {{ $errors->first('audio') }}
+                                                                </div>
+                                                            @endif
                                                         </div>
-                                                        <div>
-                                                            <button class="btn pl-3 kirim rounded-3 full-width-button"
-                                                                type="button" data-bs-toggle="modal"
-                                                                data-bs-target="#kirimkolaborasi-{{ $project->code }}">
-                                                                Unggah
-                                                            </button>
+                                                        <div class="mb-3">
+                                                            <select name="genre" class="form-select"
+                                                                style="border-radius: 13px"
+                                                                aria-label="Default select example">
+                                                                <option value="" disabled selected>Music Genre
+                                                                </option>
+                                                                @foreach ($genre as $item)
+                                                                    <option value="{{ $item->id }}">
+                                                                        {{ $item->name }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                {{-- </form> --}}
+                                                <div class="mt-2">
+                                                    <button class="btn pl-3 kirim rounded-3 full-width-button"
+                                                        type="button" data-bs-toggle="modal"
+                                                        data-bs-target="#kirimkolaborasi-{{ $project->code }}">
+                                                        Unggah
+                                                    </button>
+                                                </div>
                                         </div>
                                     </div>
                                 </div>
@@ -323,11 +359,17 @@
                         </div>
                     </div>
                 @else
+                <style>
+                    label {
+                        justify-content: start
+                    }
+                </style>
                     <div class="col-md-6">
                         <div class="card kiri scrollbar-dusty-grass square thin rounded-4">
                             <div class="card-body">
                                 <div class="row">
-                                    <h3 class="fw-semibold mb-3" style="color: #957dad; margin-top: -10px;">Detail Kolaborasi</h3>
+                                    <h3 class="fw-semibold mb-3" style="color: #957dad; margin-top: -10px;">Detail
+                                        Kolaborasi</h3>
                                     <div class="col-12">
                                         <div class="preview-list">
                                             <form action="{{ route('create.project.artisVerified', $project->code) }}"
@@ -340,8 +382,8 @@
                                                                 class="form-label judulnottebal fs-6">Nama Project</label>
                                                             <input type="text"
                                                                 class="form-control form-i inputcolor bg-white"
-                                                                name="name" value="{{ $project->name }}" id="nama"
-                                                                readonly disabled>
+                                                                name="name" value="{{ $project->name }}"
+                                                                id="nama" readonly disabled>
                                                         </div>
                                                         <div class="mb-3">
                                                             <label for="namakategori"
@@ -354,9 +396,10 @@
                                                                 class="form-label judulnottebal fs-6">Harga</label>
                                                             <input type="text" name="harga"
                                                                 class="form-control inputcolor bg-white" id="namaproyek"
-                                                                value="Rp. 2.000.000.00" readonly disabled>
-                                                            <label for="namakategori"
-                                                                class="pl-1" style="color: darkgray; font-size: 13px;">admin memiliki hak sebesar 10% dalam penghasilan kolaborasi.</label>
+                                                                value="Rp. {{ number_format($uang, 2, ',', '.') }}" readonly disabled>
+                                                            <span class="pl-1"
+                                                                style="color: darkgray; font-size: 13px;">admin memiliki
+                                                                hak sebesar 20% dalam penghasilan kolaborasi.</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -369,6 +412,7 @@
                     </div>
                 @endif
             </div>
+
             <!-- Modal -->
             <div class="modal fade" id="kirimkolaborasi-{{ $project->code }}" tabindex="-1"
                 aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -389,7 +433,7 @@
                                     <div class="range-wrap">
                                         <div class="range-value" id="rangeV">0%</div>
                                         <input class="slider mb-4" id="range" name="range" type="range"
-                                            min="0" max="100" value="40" step="1">
+                                            min="40" max="70" step="1">
                                         <output for="range" class="output">Rp. 0</output>
                                     </div>
                                 </div>
@@ -429,29 +473,37 @@
         const output = document.querySelector('.output');
 
         const setValue = () => {
-            const persentase = Number(range.value);
-            const faktor = 18000;
+            fetch(`/nominal`)
+                .then(response => response.json())
+                .then(data => {
+                    const faktor = data.nominal.pendapatanArtis;
+                    const persentase = Number(range.value);
+        
+                    if (persentase < 40) {
+                        range.value = 40;
+                    } else if (persentase > 80) {
+                        range.value = 80;
+                    }
+        
+                    const uang = (persentase / 100) * faktor;
+                    rangeV.innerHTML = `${persentase}%`;
+        
+                    const harga = formatRupiah(uang);
+                    output.textContent = harga;
+                })
+                .catch(error => {
+                    console.error('Error fetching item data:', error);
+                });
 
-            if (persentase < 40) {
-                range.value = 40;
-            } else if (persentase > 80) {
-                range.value = 80;
-            }
-
-            const uang = (persentase / 100) * faktor * 100;
-            rangeV.innerHTML = `${persentase}%`;
-
-            const harga = formatRupiah(uang);
-            output.textContent = `Rp. ${harga}`;
         };
 
-        // Fungsi untuk mengonversi nilai menjadi format Rupiah (Rp)
         const formatRupiah = (angka) => {
-            let reverse = angka.toString().split('').reverse().join('');
-            let ribuan = reverse.match(/\d{1,3}/g);
-            ribuan = ribuan.join('.').split('').reverse().join('');
-            return ribuan;
+            return angka.toLocaleString('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+            });
         };
+
 
         document.addEventListener("DOMContentLoaded", () => {
             setValue();

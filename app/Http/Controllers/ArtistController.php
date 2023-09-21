@@ -16,6 +16,7 @@ use App\Models\projects;
 use App\Models\Riwayat;
 use App\Models\song;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -36,12 +37,13 @@ class ArtistController extends Controller
     {
         $title = "MusiCave";
         $songs = song::all();
+        $song = song::where('didengar', '>', '10')->orderByDesc('didengar')->get();
         $genres = genre::all();
         $artist = artist::with('user')->get();
         $playlists = playlist::all();
         $billboards = billboard::all();
         $notifs = notif::with('artis.user')->where('user_id', auth()->user()->id)->get();
-        return response()->view('artis.dashboard', compact('title', 'songs', 'genres', 'artist', 'billboards', 'playlists', 'notifs'));
+        return response()->view('artis.dashboard', compact('title', 'songs', 'song', 'genres', 'artist', 'billboards', 'playlists', 'notifs'));
     }
 
     protected function playlist(): Response
@@ -61,6 +63,7 @@ class ArtistController extends Controller
         $artistid = (int) artist::where('user_id', auth()->user()->id)->first()->id;
         $totalpenghasilan = penghasilan::where('artist_id', $artistid)->sum('penghasilan');
         $penghasilan = penghasilan::where('artist_id', $artistid)->pluck('penghasilan')->toArray();
+        $penghasilanArtis = penghasilan::with('artist')->where('artist_id', $artistid)->where('is_submit', true)->get();
         // $month = penghasilan::where('artist_id', $artistid)->pluck('bulan')->toArray();
         $month = [];
         if ($request->has("artist_id")) {
@@ -86,7 +89,7 @@ class ArtistController extends Controller
         }
 
         $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('artis.penghasilan', compact('title', 'month', 'totalpenghasilan', 'songs', 'penghasilan', 'projects', 'notifs'));
+        return response()->view('artis.penghasilan', compact('title', 'month', 'totalpenghasilan', 'songs', 'penghasilan', 'projects', 'notifs', 'penghasilanArtis'));
     }
 
     protected function riwayat(): Response
@@ -100,11 +103,10 @@ class ArtistController extends Controller
         return response()->view('artis.riwayat', compact('title', 'notifs', 'uniqueRows'));
     }
 
-    protected function profile(): Response
+    protected function profile(string $code)
     {
-        $title = "MusiCave";
-        $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('artis.profile.profile', compact('title', 'notifs'));
+        $user = artist::with('user')->where('user_id', $code)->first();
+        return response()->json(['user' => $user]);
     }
 
     protected function profile_ubah(string $code): Response
@@ -206,8 +208,8 @@ class ArtistController extends Controller
             $imagePath = $request->file('foto')->store('images', 'public');
             $artist->pengajuan_verified_at = now()->toDateString();
             $artist->verification_status = "pending";
-            $msg = 'Pengajuan Verifikasi';
             $artist->image = $imagePath;
+            $artist->pengajuan = true;
             $artist->update();
         } catch (\Throwable $th) {
             Alert::error('message', 'Gagal Mengirim Request Verification Account');
@@ -319,9 +321,11 @@ class ArtistController extends Controller
         try {
             User::where('code', $code)->update($value);
         } catch (Throwable $e) {
-            return abort(404);
+            Alert::error('message', 'Profile gagal di perbarui');
+            return redirect()->back();
         }
-        return redirect()->back()->withErrors($validate)->withInput();
+        Alert::success('message', 'Profile berhasil di perbarui');
+        return redirect()->back();
     }
 
     protected function hapusPlaylist(string $code)
@@ -343,6 +347,21 @@ class ArtistController extends Controller
             return abort(404);
         }
         return response()->redirectTo('artis/playlist');
+    }
+
+    protected function filterDate(Request $request)
+    {
+        $startDate = $request->start_date;
+        $endDate = $request->end_date;
+
+        $start_date = Carbon::parse($startDate)->startOfDay();
+        $end_date = Carbon::parse($endDate)->endOfDay();
+
+        $results = penghasilan::with('artist')->whereNotIn('status', ['pending', 'reject'])
+            ->whereBetween('created_at', [$start_date, $end_date])
+            ->get();
+
+        return redirect()->back()->with(['results' => $results]);
     }
 
     protected function hapusSongPlaylist(string $code)
@@ -423,8 +442,8 @@ class ArtistController extends Controller
             DB::beginTransaction();
             $code = Str::uuid();
             $image = $request->file('image')->store('images', 'public');
-            $audio = $request->file('audio')->store('musics', 'public');
-
+            $audioPath = $request->file('audio')->store('musics', 'public');
+            // dd($audioPath);
             $getID3 = new getID3();
 
             $audioInfo = $getID3->analyze($request->file('audio')->path());
@@ -439,7 +458,7 @@ class ArtistController extends Controller
                 'code' => $code,
                 'judul' => $request->input('judul'),
                 'image' => $image,
-                'audio' => $audio,
+                'audio' => $audioPath,
                 'waktu' => $formattedDuration,
                 'is_approved' => false,
                 'genre_id' => $request->input('genre'),
@@ -448,13 +467,15 @@ class ArtistController extends Controller
             ]);
             DB::commit();
 
-            $penghasilanArtist = (int) $artis->penghasilan + 35000;
+            $penghasilanArtist = (int) $artis->penghasilan + 200000;
             $artis->update(['penghasilan' => $penghasilanArtist]);
-            // Alert::success('message', 'Berhasil Mengunggah Lagu');
+
+            Alert::success('message', 'Lagu berhasil di upload, tunggu admin untuk publish');
             return redirect('/artis/unggahAudio')->with('success', 'Song uploaded successfully.');
         } catch (\Throwable $e) {
             DB::rollBack();
-            return abort(404);
+            Alert::error('message', 'Lagu gagal di upload');
+            return redirect()->back();
         }
     }
 
@@ -512,6 +533,7 @@ class ArtistController extends Controller
 
         $users = User::where('name', 'LIKE', '%' . $query . '%')
             ->where('role_id', '!=', 3)
+            ->where('role_id', '!=', 4)
             ->get();
 
         try {
@@ -528,7 +550,8 @@ class ArtistController extends Controller
     public function search_song(Request $request)
     {
         $query = $request->input('query');
-        $results = song::with('artist.user')->where('judul', 'like', '%' . $query . '%')->get();
+        $id = $request->input('id');
+        $results = song::with('artist.user')->where('judul', 'like', '%' . $query . '%')->where('album_id', $id)->get();
 
         return response()->json(['results' => $results]);
     }
@@ -693,7 +716,7 @@ class ArtistController extends Controller
         } catch (\Throwable $th) {
             return abort(404);
         }
-        return response()->view('artis.playlist', compact('title', 'album', 'notifs'));
+        return redirect()->back();
     }
 
     protected function detailPlaylist(string $code): Response
@@ -727,7 +750,9 @@ class ArtistController extends Controller
     {
         $title = "MusiCave";
         $notifs = notif::where('user_id', auth()->user()->id)->get();
-        return response()->view('artis.playlist.disukai', compact('title', 'notifs'));
+        $songId = Like::where('user_id', Auth::user()->id)->pluck('song_id')->toArray();
+        $song = song::whereIn('id', $songId)->get();
+        return response()->view('artis.playlist.disukai', compact('title', 'song', 'notifs'));
     }
 
     protected function viewKolaborasi(Request $request)
@@ -762,7 +787,12 @@ class ArtistController extends Controller
 
     protected function logout(Request $request)
     {
-        Auth::logout();
+        User::where('id', auth()->user()->id)->update(['is_login' => false]);
+        try {
+            Auth::logout();
+        } catch (\Throwable $th) {
+            return abort(404);
+        }
         return response()->redirectTo("/masuk");
     }
 

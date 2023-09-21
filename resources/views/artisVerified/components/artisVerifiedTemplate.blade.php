@@ -2,18 +2,8 @@
 <html lang="en">
 
 <head>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
-        integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/js/select2.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{{ $title }}</title>
@@ -27,6 +17,7 @@
     <link rel="stylesheet" href="/user/assets/css/style.css">
     <link rel="stylesheet" href="{{ asset('style.css') }}">
     <link rel="shortcut icon" href="/image/favicon.svg" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,400;0,500;1,100;1,200&display=swap');
 
@@ -34,14 +25,10 @@
             font-family: 'Poppins', sans-serif;
         }
 
-        select {
-            width: 100%;
-            min-height: 100px;
-            border-radius: 3px;
-            border: 1px solid #444;
-            padding: 10px;
-            color: #444444;
-            font-size: 14px;
+        .fixedbar {
+            position: fixed;
+            z-index: 1030;
+            width: 245px;
         }
 
         .search-container {
@@ -134,6 +121,46 @@
             content: "\f004";
             color: #957DAD;
         }
+
+        /* CSS untuk styling pagination */
+        .pagination {
+            margin-top: 20px;
+        }
+
+        .page-item:first-child .page-link {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-radius: 10px;
+        }
+
+        .page-item:last-child .page-link {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-radius: 10px;
+        }
+
+        .pagination li {
+            display: inline;
+            margin-right: 5px;
+        }
+
+        .pagination li a {
+            text-decoration: none;
+            border-radius: 10px;
+        }
+
+        .page-link.active {
+            background-color: #957DAD;
+            border: 1px solid #957DAD;
+        }
+
+        .pagination li.active a {
+            color: #fff;
+        }
+
+        .pagination li:hover {
+            background-color: #ddd;
+        }
     </style>
     <script>
         // INI SCRIPT UNTUK HASIL SEARCH TAMPIL/TIDAK
@@ -160,7 +187,7 @@
                 <a class="sidebar-brand brand-logo" href="/artis-verified/dashboard"><img
                         src="/user/assets/images/logo.svg" alt="logo" /></a>
             </div>
-            <ul class="nav">
+            <ul class="nav fixedbar">
                 <li class="nav-item menu-items">
                     <a class="nav-link" href="/artis-verified/dashboard">
                         <span class="menu-icon ">
@@ -176,8 +203,8 @@
                         </span>
                         <span class="menu-title">Album</span>
                         <a href="#ui-basic" data-toggle="collapse" aria-expanded="false" aria-controls="ui-basic">
-                            <span class="menu-arrow">
-                                <i class="mdi mdi-chevron-right"></i>
+                            <span class="menu-arrow gh">
+                                <i class="mdi mdi-chevron-down"></i>
                             </span>
                         </a>
                     </a>
@@ -210,25 +237,39 @@
                 </li>
                 <li class="nav-item menu-items">
                     <a class="nav-link" href="/artis-verified/kolaborasi">
-                        @if ($title === 'kolaborasi')
-                            <span class="menu-icon">
-                                <i class="mdi mdi-account-group-outline"></i>
-                            </span>
-                        @else
-                            <span class="menu-icon">
-                                <i class="mdi mdi-account-group-outline"></i>
-                            </span>
-                            <span class="menu-title">Kolaborasi</span>
-                        @endif
+                        <span class="menu-icon">
+                            <i class="mdi mdi-account-group-outline"></i>
+                        </span>
+                        <span class="menu-title">Kolaborasi</span>
                     </a>
                 </li>
                 <li class="nav-item menu-items">
-                    <a class="nav-link" href="/artis-verified/penghasilan">
+                    <a class="nav-link" data-toggle="collapse" href="#penghasilan" aria-expanded="false"
+                        aria-controls="penghasilan">
                         <span class="menu-icon">
                             <i class="mdi mdi-cash-multiple"></i>
                         </span>
                         <span class="menu-title">Penghasilan</span>
+                        <i class="menu-arrow"></i>
                     </a>
+                    <div class="collapse" id="penghasilan">
+                        <ul class="nav flex-column sub-menu">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/artis-verified/penghasilan">
+                                    <span class="menu-icon mr-0">
+                                        <i class="mdi mdi-cash-multiple submenu" style="font-size: 20px;"></i>
+                                    </span>Penghasilan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/artis-verified/riwayatPenghasilan">
+                                    <span class="menu-icon mr-0">
+                                        <i class="mdi mdi-cash submenu" style="font-size: 20px;"></i>
+                                    </span>Riwayat Pencairan
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
                 <li class="nav-item menu-items">
                     <a class="nav-link" href="/artis-verified/riwayat">
@@ -243,7 +284,7 @@
                         <span class="menu-icon">
                             <i class="mdi mdi-information-outline"></i>
                         </span>
-                        <span class="menu-title">Peraturan</span>
+                        <span class="menu-title">Informasi</span>
                     </a>
                 </li>
             </ul>
@@ -268,6 +309,8 @@
                     <div class="progress-controller">
                         <div class="control-buttons">
                             <div id="controls">
+                                <button onclick="shuffle_song()" id="shuffle"><i class="fa fa-random"
+                                        aria-hidden="true"></i></button>
                                 <button onclick="previous_song()" id="pre"><i class="fa fa-step-backward"
                                         aria-hidden="true"></i></button>
                                 <button onclick="justplay()" id="play"><i class="far fa-play-circle fr"
@@ -356,11 +399,11 @@
                                                 <p class="preview-subject mb-1" style="font-weight: bold">
                                                     {{ $item->title }}</p>
                                                 @if ($item->message !== null)
-                                                    <button class="text-muted ellipsis mb-0"
-                                                        style="font-size: 12px; font-weight: normal"
+                                                    <span class="text-muted ellipsis mb-0"
+                                                        style="font-size: 12px; font-weight: normal; cursor: pointer;"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#alasan-{{ $item->code }}">Klik
-                                                        untuk melihat alasan</button>
+                                                        untuk melihat alasan</span>
                                                 @else
                                                     <p class="text-muted ellipsis mb-0">{{ $item->artis->user->name }}
                                                     </p>
@@ -392,8 +435,7 @@
                                     style="display: flex; flex-direction: row; justify-content: center; align-items: center;">
                                     <img class="img-xs rounded-circle" style="object-fit: cover;"
                                         src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="">
-                                    <p class="mb-0 d-none d-sm-block navbar-profile-name">{{ auth()->user()->name }}
-                                    </p>
+                                    <p class="mb-0 d-none d-sm-block navbar-profile-name" style="width: 60px; overflow: hidden; text-overflow: ellipsis; height: 15px;">{{ auth()->user()->name }}</p>
                                 </div>
                                 <a href="{{ route('ubah.profile.artisVerified', auth()->user()->code) }}"
                                     class="dropdown-item preview-item">
@@ -406,7 +448,7 @@
                                         <p class="preview-subject mb-1 fw-light">Profile</p>
                                     </div>
                                 </a>
-                                <a class="dropdown-item preview-item" href="{{ route('logout.users') }}">
+                                <a class="dropdown-item preview-item" href="{{ route('logout.artisVerified') }}">
                                     <div class="preview-thumbnail">
                                         <div class="preview-icon rounded-circle">
                                             <i class="mdi mdi-logout"></i>
@@ -426,6 +468,7 @@
                 </div>
             </nav>
 
+            @include('sweetalert::alert')
             @yield('content')
 
             <div id="buat-album">
@@ -440,12 +483,12 @@
                                 <div class="mb-3">
                                     <h3 class="form-label judul">Nama Album</h3>
                                     <input type="text" name="name" class="form-control" id="namaproyek"
-                                        placeholder="Masukkan nama kategori musik" maxlength="80" required>
+                                        placeholder="Masukkan nama kategori musik" maxlength="55" required>
                                 </div>
                                 <div class="mb-3">
                                     <h3 for="upload" class="form-label judul">Upload
                                         Foto</h3>
-                                    <input type="file" name="image" class="form-control" id="namaproyek"
+                                    <input type="file" name="image" class="form-control" id="namaproyek" accept="image/*"
                                         required>
                                 </div>
                             </div>
@@ -487,11 +530,13 @@
                 $(document).ready(function() {
                     $('#search_song').on('keyup', function() {
                         var query = $(this).val();
+                        var id = $('#album_id').val()
                         $.ajax({
                             url: '/artis-verified/search_song/',
                             type: 'GET',
                             data: {
-                                query: query
+                                query: query,
+                                id: id
                             },
                             dataType: 'json',
                             success: function(response) {
@@ -566,11 +611,11 @@
                         });
                     });
                 });
-                $(document).ready(function() {
-                    $('.menu-arrow').click(function() {
-                        $(this).find('i').toggleClass('mdi-chevron-right mdi-chevron-down');
-                    });
-                });
+                // $(document).ready(function() {
+                //     $('.menu-arrow').click(function() {
+                //         $(this).find('i').toggleClass('mdi-chevron-right mdi-chevron-down');
+                //     });
+                // });
             </script>
 
             <script>
@@ -703,7 +748,6 @@
                     })
                 }
 
-
                 function updateSongLikeStatus(songId, isLiked) {
                     const likeIcons = document.querySelectorAll(`.shared-icon-like[data-id="${songId}"]`);
                     likeIcons.forEach(likeIcon => {
@@ -727,7 +771,7 @@
                 let slider = document.querySelector('#duration_slider');
                 let show_duration = document.querySelector('#show_duration');
                 let track_image = document.querySelector('#track_image');
-
+                let shuffleButton = document.querySelector('#shuffle_button');
                 let auto_play = document.querySelector('#auto');
 
                 let timer;
@@ -783,7 +827,6 @@
                         artist.innerHTML = All_song[index_no].artistId;
                         track_image.src = '{{ asset('storage') }}' + '/' + All_song[index_no].image;
                         track.load();
-
                         timer = setInterval(range_slider, 1000);
 
                     } else {
@@ -804,7 +847,6 @@
                     }
                     updateMuteButtonIcon();
                 }
-
                 // fungsi untuk memeriksa lagu diputar atau tidak
                 function justplay() {
                     if (Playing_song == false) {
@@ -837,8 +879,6 @@
                         const songId = All_song[index_no].id;
                         console.log(All_song[index_no])
                         updatePlayCount(songId);
-                        history(songId);
-
                     }
                     track.addEventListener('timeupdate', updateDuration);
                     playCount++;
@@ -885,6 +925,32 @@
                             // console.log('Pesan Kesalahan Server:', xhr.responseText);
                         }
                     });
+                }
+                shuffleButton.addEventListener('click', function() {
+                    shuffle_song();
+                });
+
+
+                function shuffle_song() {
+                    let currentIndex = All_song.length,
+                        randomIndex, temporaryValue;
+
+                    // Selama masih ada elemen untuk diacak
+                    while (currentIndex !== 0) {
+                        // Pilih elemen yang tersisa secara acak
+                        randomIndex = Math.floor(Math.random() * currentIndex);
+                        currentIndex--;
+
+                        // Tukar elemen terpilih dengan elemen saat ini
+                        temporaryValue = All_song[currentIndex];
+                        All_song[currentIndex] = All_song[randomIndex];
+                        All_song[randomIndex] = temporaryValue;
+                    }
+                    // Setel ulang indeks lagu saat ini ke 0
+                    index_no = 0;
+                    // Memuat lagu yang diacak
+                    load_track(index_no);
+                    playsong();
                 }
 
                 // pause song
@@ -958,6 +1024,7 @@
                 // ubah posisi slider
                 // Fungsi untuk mengubah posisi slider
                 function change_duration() {
+                    let slider_value = slider.value;
                     if (!isNaN(track.duration) && isFinite(slider_value)) {
                         track.currentTime = track.duration * (slider_value / 100);
                         console.log(track.duration * (slider_value / 100), slider_value, track.currentTime)
@@ -987,6 +1054,8 @@
                     if (track.ended) {
                         play.innerHTML = '<i class="far fa-play-circle" aria-hidden="true"></i>';
                         if (autoplay == 1) {
+                            const songId = All_song[index_no].id;
+                            history(songId);
                             index_no += 1;
                             load_track(index_no);
                             playsong();

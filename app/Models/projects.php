@@ -16,6 +16,7 @@ class projects extends Model
         'images',
         'audio',
         'harga',
+        'is_take',
         'artist_id',
         'request_project_artis_id_1',
         'request_project_artis_id_2',
@@ -27,9 +28,17 @@ class projects extends Model
         'is_approved',
     ];
 
-    public function artis()
+public function artis()
     {
         return $this->hasOne(artist::class, 'id', 'artist_id');
+    }
+public function artis2()
+    {
+        return $this->hasOne(artist::class, 'id', 'request_project_artis_id_1');
+    }
+public function artis3()
+    {
+        return $this->hasOne(artist::class, 'id', 'request_project_artis_id_2');
     }
 
     public function messages()

@@ -26,7 +26,7 @@
                                     </div>
                                 @endif
                             </div>
-                            <div class="col-3 text-xxl-end">
+                            <div class="col-9 text-xxl-end">
                                 <div class="bottom-left-text">
                                     <h3 class="m-0" style="font-weight: 600">{{ $albumDetail->name }}
                                     </h3>
@@ -46,6 +46,7 @@
                 <h3 class="card-title judul">Temukan berbagai lagu</h3>
                 <form class="col-6 mb-4 p-0 nav-link search">
                     <input type="text" id="search_song" class="form-control rounded-4" placeholder="Cari musik">
+                    <input type="hidden" id="album_id" value="{{ $albumDetail->id }}">
                     <ul id="search-results-song"></ul>
                 </form>
                 <div class="card scroll scrollbar-down thin">
@@ -67,20 +68,10 @@
                                                     </a>
                                                     <div class="mr-auto text-sm-right pt-2 pt-sm-0">
                                                         <div class="text-group">
-                                                                <i onclick="myFunction(this)" class="far fa-heart pr-2">
-                                                                </i>
+                                                            <i id="like{{ $item->id }}" data-id="{{ $item->id }}"
+                                                                onclick="toggleLike(this, {{ $item->id }})"
+                                                                class="shared-icon-like {{ $item->isLiked ? 'fas' : 'far' }} fa-heart pr-2"></i>
                                                             <p>{{ $item->waktu }}</p>
-                                                            <a data-bs-toggle="modal"
-                                                                data-bs-target="#staticBackdrop-{{ $item->code }}"
-                                                                style="color: #957dad cursor: pointer">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" x="0px"
-                                                                    y="0px" width="20" height="20"
-                                                                    viewBox="0 2 24 24">
-                                                                    <path fill="#957DAD"
-                                                                        d="M 12 2 C 6.4889971 2 2 6.4889971 2 12 C 2 17.511003 6.4889971 22 12 22 C 17.511003 22 22 17.511003 22 12 C 22 6.4889971 17.511003 2 12 2 z M 12 4 C 16.430123 4 20 7.5698774 20 12 C 20 16.430123 16.430123 20 12 20 C 7.5698774 20 4 16.430123 4 12 C 4 7.5698774 7.5698774 4 12 4 z M 11 7 L 11 11 L 7 11 L 7 13 L 11 13 L 11 17 L 13 17 L 13 13 L 17 13 L 17 11 L 13 11 L 13 7 L 11 7 z">
-                                                                    </path>
-                                                                </svg>
-                                                            </a>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -131,7 +122,7 @@
                                         style="background-size: cover; background-repeat: no-repeat" width="150"
                                         alt="Gambar">
                                 </label>
-                                <input type="file" id="gambar" name="image" accept="image/png,image/jpg"
+                                <input type="file" id="gambar" name="image" accept="image/*"
                                     class="inputgambar">
                             </div>
                         </div>

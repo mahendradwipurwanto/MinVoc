@@ -29,11 +29,11 @@
                                 </div>
                                 <div class="mb-4">
                                     <h5 class="judul mb-3">Tanggal Pengajuan :</h5>
-                                    <p class="teksbiasa">{{ $item->pengajuan_verified_at }}</p>
+                                    <p class="teksbiasa">{{ (new DateTime($item->pengajuan_verified_at))->format('d F Y') }}</p>
                                 </div>
                                 <div class="mb-4">
-                                    <h5 class="judul mb-3">Pengikut :</h5>
-                                    <p class="teksbiasa">{{ $item->Pengikut }}</p>
+                                    <h5 class="judul mb-3">Disukai :</h5>
+                                    <p class="teksbiasa">{{ $item->likes }}</p>
                                 </div>
                             </div>
                             <div class="col-6">
@@ -245,7 +245,9 @@
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td class="table-cell mt-1">{{ \Carbon\Carbon::parse($item->created_at)->format('Y-m-d') }}
+                                                    <td class="table-cell mt-1">
+                                                        {{ (new DateTime($item->created_at))->format('d F Y') }}
+                                                        {{-- {{ \Carbon\Carbon::parse($item->created_at)->format('Y-m-d') }} --}}
                                                     </td>
                                                     <td class="table-cell text-warning mt-1">
                                                         {{ $item->verification_status }}
@@ -265,21 +267,19 @@
                             </div>
                         </div>
                     </div>
-                    @php
+                    {{-- @php
                         $count = $artist
                             ->filter(function ($item) {
-                                return $item->pengajuan_verified_at === 0;
+                                return $item->pengajuan === 0;
                             })
                             ->count();
                     @endphp
-
-                    @if ($count > 0)
+                    @if ($count == 0)
                         <div style="justify-content: center; display: flex; padding: 50px 0;">
                             <img width="400" height="200" src="/icon-notFound/adminIcon.svg" alt=""
                                 srcset="">
                         </div>
-                    @endif
-
+                    @endif --}}
 
                     <div class="text-center">
                         <div class="text-center">

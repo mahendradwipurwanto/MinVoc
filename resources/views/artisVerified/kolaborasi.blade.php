@@ -1,47 +1,8 @@
 @extends('artisVerified.components.artisVerifiedTemplate')
 
-{{-- @foreach ($datas as $item)
-    <div class="modal fade" id="staticBackdrop-{{ $item->code }}" data-bs-backdrop="static" data-bs-keyboard="false"
-        tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content" style="background-color: white">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Detail Kolaborasi</h1>
-                    <button type="button" class="btn-unstyled" data-bs-dismiss="modal" aria-label="Close">
-                        <i class="mdi mdi-close-circle-outline btn-icon text-danger"></i>
-                    </button>
-                </div>
-                <div class="modal-body ">
-
-                    <div class="mb-3 row">
-                        <label class="col-sm-4 col-form-label"><b>Judul Lagu </b><strong class="">:</strong>
-                        </label>
-                        <div class="col-sm-8">
-                            <input type="text" readonly class="form-control-plaintext" value="{{ $item->name }}">
-                        </div>
-                    </div>
-
-                    <div class="mb-3 row">
-                        <label class="col-sm-4 col-form-label"><b>Deskripsi </b><strong
-                                class="">:</strong></label>
-                        <div class="col-sm-5">
-                            <p class="judul-lagu text-dark">{{ $item->konsep }}</p>
-                        </div>
-                    </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-info rounded-3">
-                        <a href="{{ route('lirikAndChat.artisVerified', $item->code) }}" class="btn-link"
-                            style="color: inherit; text-decoration: none;">Buat
-                            Proyek</a></button>
-                </div>
-            </div>
-        </div>
-    </div>
-@endforeach --}}
-
 @section('content')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <div class="main-panel">
         <style>
             .modal-content {
@@ -89,15 +50,10 @@
             }
 
             .table-cell {
-
                 flex: 1;
-
                 padding-left: 10%;
-
                 text-align: left;
-
                 padding: 10px;
-
             }
 
             .table-header {
@@ -265,7 +221,75 @@
                 font-weight: 600;
                 font-size: 20px;
             }
+
+            .flex-grow.text-decoration-none.link.btn {
+                max-width: 100px;
+                /* Ganti dengan lebar maksimum yang Anda inginkan */
+            }
         </style>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const confirmButtons = document.querySelectorAll('.confirmButton');
+
+                confirmButtons.forEach(confirmButton => {
+                    confirmButton.addEventListener('click', function(event) {
+                        event.preventDefault(); // Mencegah pengiriman formulir langsung
+
+                        const itemCode = this.getAttribute('data-item-code');
+                        const tableRow = this.closest(
+                            'tr'); // Mendapatkan baris tabel yang berisi tombol hapus
+
+                        Swal.fire({
+                            title: 'Konfirmasi Hapus',
+                            text: 'Apakah Anda yakin ingin menghapus project ini?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Ya, Hapus!',
+                            cancelButtonText: 'Batal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Jika pengguna mengonfirmasi, kirimkan formulir
+                                const form = event.target.closest('form');
+                                if (form) {
+                                    form.submit();
+                                }
+                            }
+                        });
+
+                    });
+                });
+            });
+
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const confirmButtonRejects = document.querySelectorAll('.confirmButtonReject');
+
+                confirmButtonRejects.forEach(confirmButtonReject => {
+
+                    confirmButtonReject.addEventListener('click', function(event) {
+                        event.preventDefault(); // Mencegah pengiriman formulir langsung
+                        const itemCode = this.getAttribute('data-item');
+                        const tableRow = this.closest('tr');
+                        Swal.fire({
+                            title: 'Konfirmasi Hapus',
+                            text: 'Apakah Anda yakin ingin menolak kolaborasi ini?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Ya, Hapus!',
+                            cancelButtonText: 'Batal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Jika pengguna mengonfirmasi, kirimkan formulir
+                                const form = event.target.closest('form');
+                                if (form) {
+                                    form.submit();
+                                }
+                            }
+                        });
+                    });
+                });
+            });
         </script>
 
 
@@ -313,17 +337,19 @@
                                                                 <i class="mdi mdi-eye btn-icon text-primary"
                                                                     style="font-size: 20px; margin-right: 2px;"></i>
                                                             </a>
-                                                            <form action="{{ route('reject.project.artisVerified') }}"
-                                                                method="post" class="m-0">
-                                                                @csrf
-                                                                <button type="submit">
+
+                                                            <button type="button" class="confirmButton"
+                                                                data-item-code="{{ $item->code }}">
+                                                                <form action="{{ route('reject.project.artisVerified') }}"
+                                                                    method="post" class="m-0">
+                                                                    @csrf
                                                                     <input type="hidden" name="code"
                                                                         value="{{ $item->code }}">
                                                                     <input type="hidden" name="is_reject" value="true">
                                                                     <i class="mdi mdi-close-circle-outline btn-icon text-danger"
                                                                         style="font-size: 20px"></i>
-                                                                </button>
-                                                            </form>
+                                                                </form>
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 @endif
@@ -353,14 +379,12 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($datas->reverse() as $item)
-                                            {{-- @dd() --}}
-                                            {{-- @if ($item->status == 'pending' && $item->request_project_artis_id !== null) --}}
                                             @if (
                                                 $item->request_project_artis_id_1 !== null ||
                                                     ($item->request_project_artis_id_2 !== null && $item->artist_id === $artisUser->id) ||
                                                     $item->request_project_artis_id_1 === $artisUser->id ||
                                                     $item->request_project_artis_id_2 === $artisUser->id)
-                                                @if (empty($item->harga))
+                                                @if (empty($item->harga) || in_array($item->status, ['accept', 'pending', 'reject']))
                                                     @if (!$item->is_reject || $item->artis->user_id === auth()->user()->id)
                                                         <tr class="table-row">
                                                             <td class="table-cell">{{ $item->artis->user->name }}</td>
@@ -368,69 +392,99 @@
                                                             <td class="table-cell">{{ $item->created_at->format('d F Y') }}
                                                             </td>
                                                             <td
-                                                                class="table-cell {{ $item->status === 'reject' ? 'text-danger' : 'text-warning' }}">
-                                                                {{ $item->status }}</td>
+                                                                class="table-cell text-success {{ $item->status == 'reject' ? 'text-danger' : '' }} {{ $item->status == 'pending' ? 'text-warning' : '' }}">
+                                                                {{ $item->status == 'reject' ? 'Tolak' : '' }}
+                                                                {{ $item->status == 'pending' ? 'Menunggu' : '' }}
+                                                                {{ $item->status == 'accept' ? 'Selesai' : '' }}
+                                                            </td>
+
                                                             <td class="d-flex align-items-center">
-                                                                @if ($item->status == 'pending')
-                                                                    <form
-                                                                        action="{{ route('lirikAndChat.artisVerified', $item->code) }}"
-                                                                        method="GET">
-                                                                        <button type="submit" class="btn-unstyled">
-                                                                            <i
-                                                                                class="far fa-check-circle fs-5 text-success ml-1"></i>
-                                                                        </button>
-                                                                    </form>
-                                                                @endif
-                                                                <form action="{{ route('reject.project.artisVerified') }}"
-                                                                    method="post" class="m-0">
-                                                                    @csrf
-                                                                    <button type="submit">
-                                                                        <input type="hidden" name="code"
-                                                                            value="{{ $item->code }}">
-                                                                        <input type="hidden" name="is_reject"
-                                                                            value="true">
-                                                                        <i class="far fa-times-circle btn-icon text-danger"
-                                                                            style="font-size: 20px"></i>
+                                                                <button type="button" data-bs-toggle="modal"
+                                                                    data-bs-target="#kolaborasiModal-{{ $item->code }}">
+
+                                                                    <!-- Tambahkan ikon mata biru di samping ikon fa-times-circle -->
+                                                                    <i class="fas fa-eye text-primary "
+                                                                        style="font-size: 20px"></i>
+                                                                </button>
+
+                                                                @if ($item->status === 'accept')
+                                                                    <button type="submit" class="confirmButton"
+                                                                        data-item="{{ $item->code }}">
+                                                                        <form
+                                                                            action="{{ route('reject.project.artisVerified') }}"
+                                                                            method="post" class="m-0">
+                                                                            @csrf
+                                                                            <input type="hidden" name="code"
+                                                                                value="{{ $item->code }}">
+                                                                            <input type="hidden" name="is_reject"
+                                                                                value="true">
+
+                                                                            <span class="">
+                                                                                <i class="far fa-times-circle btn-icon text-danger"
+                                                                                    style="font-size: 20px"></i>
+                                                                            </span>
+                                                                        </form>
                                                                     </button>
-                                                                </form>
+                                                                    <a href="#lagu-diputar"
+                                                                        class="flex-grow text-decoration-none link btn"
+                                                                        onclick="putar({{ $item->id }})">Putar Lagu</a>
+                                                                @else
+                                                                    @if (
+                                                                        $item->status !== 'accept' &&
+                                                                            (($item->status === 'pending' && $item->is_take) || $artisUser->id == $item->artist_id))
+                                                                        <form
+                                                                            action="{{ route('lirikAndChat.artisVerified', $item->code) }}"
+                                                                            method="GET">
+                                                                            <button type="submit" class="btn-unstyled">
+                                                                                <i
+                                                                                    class="fa-regular fa-comment-dots fs-5 text-info ml-1"></i>
+                                                                            </button>
+                                                                        </form>
+                                                                        <button type="submit" class="confirmButton"
+                                                                            data-item="{{ $item->code }}">
+                                                                            <form
+                                                                                action="{{ route('reject.project.artisVerified') }}"
+                                                                                method="post" class="m-0">
+                                                                                @csrf
+                                                                                <input type="hidden" name="code"
+                                                                                    value="{{ $item->code }}">
+                                                                                <input type="hidden" name="is_reject"
+                                                                                    value="true">
+                                                                                <i class="far fa-times-circle btn-icon text-danger"
+                                                                                    style="font-size: 20px"></i>
+                                                                            </form>
+                                                                        </button>
+                                                                    @else
+                                                                        <form
+                                                                            action="{{ route('lirikAndChat.artisVerified', $item->code) }}"
+                                                                            method="GET">
+                                                                            <button type="submit" class="btn-unstyled">
+                                                                                <i
+                                                                                    class="fa-regular fa-circle-check fs-5 text-success ml-1"></i>
+                                                                            </button>
+                                                                        </form>
+                                                                        <button type="submit" class="confirmButtonReject"
+                                                                            data-item="{{ $item->code }}">
+                                                                            <form
+                                                                                action="{{ route('reject.project.artisVerified') }}"
+                                                                                method="post" class="m-0">
+                                                                                @csrf
+                                                                                <input type="hidden" name="code"
+                                                                                    value="{{ $item->code }}">
+                                                                                <input type="hidden" name="is_reject"
+                                                                                    value="true">
+                                                                                <i class="far fa-times-circle btn-icon text-danger"
+                                                                                    style="font-size: 20px"></i>
+                                                                            </form>
+                                                                        </button>
+                                                                    @endif
+                                                                @endif
                                                             </td>
                                                         </tr>
                                                     @endif
                                                 @endif
                                             @endif
                                         @endforeach
-
-                                        {{-- <tr class="table-row">
-                                            <td class="table-cell">Tulus</td>
-                                            <td class="table-cell">Kenangan</td>
-                                            <td class="table-cell">13123123</td>
-                                            <td class="table-cell text-success">Disetujui</td>
-                                            <td class="d-flex align-items-center">
-                                                <a href="" class="btn-unstyled" data-bs-toggle="modal"
-                                                    data-bs-target="#chat">
-                                                    <i class="fa-regular fa-comment-dots text-primary fs-5 ml-1"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-
-                                        <tr class="table-row">
-                                            <td class="table-cell">Tulus</td>
-                                            <td class="table-cell">Kenangan</td>
-                                            <td class="table-cell">13123123</td>
-                                            <td class="table-cell text-danger">Ditolak</td>
-                                            <td class="d-flex align-items-center">
-                                                <form action="{{ route('reject.project.artisVerified') }}" method="post"
-                                                    class="m-0">
-                                                    @csrf
-                                                    <button type="submit">
-                                                        <input type="hidden" name="code" value="aa">
-                                                        <input type="hidden" name="is_reject" value="true">
-                                                        <i class="mdi mdi-close-circle-outline btn-icon text-danger"
-                                                            style="font-size: 20px"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr> --}}
                                     </tbody>
                                 </table>
                             </div>
@@ -440,238 +494,258 @@
             </div>
         </div>
 
-        {{-- untuk tambah kolab --}}
-        <div class="modal fade" id="tambahModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <!-- untuk detail selesai kolaborasi -->
+        @foreach ($datas->reverse() as $item)
+            <!-- Modal untuk Proyek Kolaborasi -->
+            <div class="modal fade" id="kolaborasiModal-{{ $item->code }}" tabindex="-1"
+                aria-labelledby="kolaborasiModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header pb-0">
+                            <h4 class="modal-title judul">Detail Proyek Kolaborasi</h4>
+                            <button type="button" class="close-button far fa-times-circle" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body" style="padding: 10px 25px 25px;">
+                            <div>
+                                <p id="kolaborasiModalLabel" class="mb-2">Artis yang berkolaborasi :</p>
+                                @if (isset($item->request_project_artis_id_1) && isset($item->request_project_artis_id_2))
+                                    <p class="ml-2">
+                                        @if ($item->artis)
+                                            {{ $item->artis->user->name }}
+                                        @endif
+                                        @if ($item->artis2)
+                                            & {{ $item->artis2->user->name }}
+                                        @endif
+                                        @if ($item->artis3)
+                                            & {{ $item->artis3->user->name }}
+                                        @endif
+                                    </p>
+                                @else
+                                    <p class="ml-2">
+                                        @if ($item->artis)
+                                            {{ $item->artis->user->name }}
+                                        @endif
+                                        @if ($item->artis2)
+                                            & {{ $item->artis2->user->name }}
+                                        @endif
+                                    </p>
+                                @endif
+                            </div>
+                            <div>
+                                <p id="kolaborasiModalLabel" class="mb-2">Nama Proyek :</p>
+                                <p class="ml-2">{{ $item->name }}</p>
+                            </div>
+                            <div>
+                                <p id="kolaborasiModalLabel" class="mb-2">Tanggal :</p>
+                                <p class="ml-2">{{ $item->created_at->format('d F Y') }}</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+    </div>
+    </div>
+    @endforeach
+
+
+    {{-- untuk tambah kolab --}}
+    <div class="modal fade" id="tambahModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title judul" id="exampleModalLabel">Tambah Kolaborasi</h3>
+                    <button type="button" class="close-button far fa-times-circle" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ route('createProject.artisVerified') }}" method="POST"
+                        enctype="multipart/form-data">
+                        @csrf
+                        <div class="mb-3">
+                            <label for="namakategori" class="form-label judulnottebal">Nama Proyek</label>
+                            <input type="text" name="name" class="form-control form-i" maxlength="30"
+                                id="namaproyek" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="konsep" class="form-label judulnottebal">Deskripsi</label>
+                            <textarea id="konsep" name="konsep" class="form-control" maxlength="500" rows="4" required></textarea>
+                        </div>
+                        <div class="text-md-right">
+                            <button type="submit" class="btn" type="submit">Tambah</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- untuk detail kolab --}}
+    @foreach ($datas as $item)
+        <div class="modal fade" id="staticBackdrop-{{ $item->code }}" data-bs-backdrop="static"
+            data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title judul" id="exampleModalLabel">Tambah Kolaborasi</h3>
-                        <button type="button" class="close-button far fa-times-circle" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
+                    <div class="modal-header border-0">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel" style="color: #957DAD">Detail
+                            Kolaborasi
+                        </h1>
+                        <button type="button" class="btn-unstyled" data-bs-dismiss="modal" aria-label="Close">
+                            <i class="fa-regular fa-circle-xmark fa-lg btn-icon" style="color: #957DAD"></i>
+                        </button>
                     </div>
-                    <div class="modal-body">
-                        <form action="{{ route('createProject.artisVerified') }}" method="POST"
-                            enctype="multipart/form-data">
-                            @csrf
+                    <div class="modal-body border-0">
+                        <div class="col-md-12" style="font-size: 13px">
                             <div class="mb-3">
-                                <label for="namakategori" class="form-label judulnottebal">Nama Proyek</label>
-                                <input type="text" name="name" class="form-control form-i" maxlength="30"
-                                    id="namaproyek" required>
+                                <label for="namakategori" class="form-label judulnottebal">Nama
+                                    Proyek</label>
+                                <input type="text" name="name" class="form-control form-i" id="namaproyek"
+                                    required="" readonly="" value="{{ $item->name }}" maxlength="30"
+                                    fdprocessedid="piymoo">
                             </div>
                             <div class="mb-3">
                                 <label for="konsep" class="form-label judulnottebal">Deskripsi</label>
-                                <textarea id="konsep" name="konsep" class="form-control" maxlength="500" rows="4" required></textarea>
+                                <textarea id="konsep" readonly name="konsep" class="form-control" maxlength="500" rows="4" required>{{ $item->konsep }}</textarea>
                             </div>
-                            <div class="text-md-right">
-                                <button type="submit" class="btn" type="submit">Tambah</button>
-                            </div>
-                        </form>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn rounded-3" data-bs-toggle="modal"
+                            data-bs-target="#undang-{{ $item->code }}">
+                            <a href="#" class="btn-link" style="color: inherit; text-decoration: none;">Undang</a>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
+    @endforeach
 
-        {{-- untuk detail kolab --}}
-        @foreach ($datas as $item)
-            <div class="modal fade" id="staticBackdrop-{{ $item->code }}" data-bs-backdrop="static"
-                data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header border-0">
-                            <h1 class="modal-title fs-5" id="staticBackdropLabel" style="color: #957DAD">Detail
-                                Kolaborasi
-                            </h1>
-                            <button type="button" class="btn-unstyled" data-bs-dismiss="modal" aria-label="Close">
-                                <i class="fa-regular fa-circle-xmark fa-lg btn-icon" style="color: #957DAD"></i>
-                            </button>
-                        </div>
-                        <div class="modal-body border-0">
-                            <div class="col-md-12" style="font-size: 13px">
-                                <div class="mb-3">
-                                    <label for="namakategori" class="form-label judulnottebal">Nama
-                                        Proyek</label>
-                                    <input type="text" name="name" class="form-control form-i" id="namaproyek"
-                                        required="" readonly="" value="{{ $item->name }}" maxlength="30"
-                                        fdprocessedid="piymoo">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="konsep" class="form-label judulnottebal">Deskripsi</label>
-                                    <textarea id="konsep" readonly name="konsep" class="form-control" maxlength="500" rows="4" required>{{ $item->konsep }}</textarea>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer border-0">
-                            <button type="button" class="btn rounded-3" data-bs-toggle="modal"
-                                data-bs-target="#undang-{{ $item->code }}">
-                                <a href="#" class="btn-link"
-                                    style="color: inherit; text-decoration: none;">Undang</a>
-                            </button>
-                        </div>
+    {{-- untuk chat --}}
+    @foreach ($datas as $project)
+        <div class="modal fade" id="chat-{{ $project->code }}" data-bs-backdrop="static" data-bs-keyboard="false"
+            tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header border-0">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel" style="color: #957DAD">Chat
+                        </h1>
+                        <button type="button" class="btn-unstyled" data-bs-dismiss="modal" aria-label="Close">
+                            <i class="fa-regular fa-circle-xmark fa-lg btn-icon" style="color: #957DAD"></i>
+                        </button>
                     </div>
-                </div>
-            </div>
-        @endforeach
-
-        {{-- untuk chat --}}
-        @foreach ($datas as $project)
-            <div class="modal fade" id="chat-{{ $project->code }}" data-bs-backdrop="static" data-bs-keyboard="false"
-                tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header border-0">
-                            <h1 class="modal-title fs-5" id="staticBackdropLabel" style="color: #957DAD">Chat
-                            </h1>
-                            <button type="button" class="btn-unstyled" data-bs-dismiss="modal" aria-label="Close">
-                                <i class="fa-regular fa-circle-xmark fa-lg btn-icon" style="color: #957DAD"></i>
-                            </button>
-                        </div>
-                        <div class="modal-body border-0">
-                            <div class="chat" style="margin-top: -20px; position: relative">
-                                <form action="{{ route('message.project.artisVerified', $project->code) }}"
-                                    method="post">
-                                    @csrf
-                                    <input type="hidden" name="id_project" value="">
-                                    <div class="card">
-                                        <div style="height: 241px">
-                                            <div class="card-body chat-box">
-                                                @foreach ($messages as $key => $item)
-                                                    @if ($project->id === $item->project->id)
-                                                        <div class="chat-message mt-1">
-                                                            @if ($key == 0 || $item->sender->user->name != $messages[$key - 1]->sender->user->name)
-                                                                <div class="chat-name">{{ $item->sender->user->name }}
-                                                                </div>
-                                                            @endif
-                                                            <div class="chat-text">{{ $item->message }}</div>
-                                                        </div>
-                                                    @endIf
-                                                @endforeach
-                                            </div>
-                                            <div class="input-with-icon chat-input">
-                                                <input type="text" class="form-control rounded-4" maxlength="50"
-                                                    placeholder="Ketik di sini untuk admin" name="message"
-                                                    style="background-color: white;">
-                                                <button type="submit" class="send-button ml-2 mr-1">
-                                                    <i class="fas fa-paper-plane"></i>
-                                                </button>
-                                            </div>
+                    <div class="modal-body border-0">
+                        <div class="chat" style="margin-top: -20px; position: relative">
+                            <form action="{{ route('message.project.artisVerified', $project->code) }}" method="post">
+                                @csrf
+                                <input type="hidden" name="id_project" value="">
+                                <div class="card">
+                                    <div style="height: 241px">
+                                        <div class="card-body chat-box">
+                                            @foreach ($messages as $key => $item)
+                                                @if ($project->id === $item->project->id)
+                                                    <div class="chat-message mt-1">
+                                                        @if ($key == 0 || $item->sender->user->name != $messages[$key - 1]->sender->user->name)
+                                                            <div class="chat-name">{{ $item->sender->user->name }}
+                                                            </div>
+                                                        @endif
+                                                        <div class="chat-text">{{ $item->message }}</div>
+                                                    </div>
+                                                @endIf
+                                            @endforeach
+                                        </div>
+                                        <div class="input-with-icon chat-input">
+                                            <input type="text" class="form-control rounded-4" maxlength="50"
+                                                placeholder="Ketik di sini untuk admin" name="message"
+                                                style="background-color: white;">
+                                            <button type="submit" class="send-button ml-2 mr-1">
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
                                         </div>
                                     </div>
-                                </form>
-                            </div>
+                                </div>
+                            </form>
                         </div>
-                        <div class="modal-footer border-0">
-                            <button type="button" class="btn rounded-3">
-                                <a href="{{ route('lirikAndChat.artisVerified', $project->code) }}" class="btn-link"
-                                    style="color: inherit; text-decoration: none;">Buat Proyek</a>
-                            </button>
-                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn rounded-3">
+                            <a href="{{ route('lirikAndChat.artisVerified', $project->code) }}" class="btn-link"
+                                style="color: inherit; text-decoration: none;">Buat Proyek</a>
+                        </button>
                     </div>
                 </div>
             </div>
-        @endforeach
+        </div>
+    @endforeach
 
-        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-        @foreach ($datas as $item)
-            <div class="modal fade" id="undang-{{ $item->code }}" data-bs-backdrop="static" data-bs-keyboard="false"
-                tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                <form class="modal-dialog modal-dialog-centered" action="{{ route('undangColab', $item->code) }}"
-                    method="post">
-                    @csrf
-                    <div class="modal-content">
-                        <div class="modal-header border-0">
-                            <h1 class="modal-title fs-5" id="staticBackdropLabel" style="color: #957DAD">Undang
-                                Kolaborator</h1>
-                            <button type="button" class="btn-unstyled" data-bs-dismiss="modal" aria-label="Close">
-                                <i class="fa-regular fa-circle-xmark fa-lg btn-icon" style="color: #957DAD"></i>
-                            </button>
-                        </div>
-                        <div class="modal-body border-0">
-                            <div class="col-md-12" style="font-size: 13px">
-                                <div class="mb-3">
-                                    <label for="namakategori" class="form-label judulnottebal">Nama
-                                        Proyek</label>
-                                    <input type="text" name="name" class="form-control form-i" id="namaproyek"
-                                        required="" readonly="" value="{{ $item->name }}"
-                                        fdprocessedid="piymoo">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="namakategori" class="form-label judulnottebal">Nama artis</label>
-                                    {{-- <select class="select2" name="kolaborator[]" multiple="multiple">
-                                        <!-- Opsi di sini -->
-                                        <option style="display: none;" selected disabled>artis verified</option>
-                                    </select> 
-
-                                    <select class="js-example-basic-multiple" id="kategori" name="kolabolator[]">
-                                        <option value="">awfwe</option>
-                                    </select> --}}
-                                    {{-- <select name="kolabolator" id="kategori" class="kategori">
-                                    </select> --}}
-
-                                    {{-- <select class="js-example-basic-multiple form-select" id="kategori" name="states[]" multiple="multiple">
-                                    </select> --}}
-                                    <div class="form-group">
-
-                                        <select class="js-example-basic-multiple" style="width: 100%" id="kategori"
-                                            name="kolaborator[]" multiple="multiple">
-                                            @foreach ($artis as $item)
-                                                @if ($item->user_id !== auth()->user()->id && $item->is_verified === 1)
-                                                    <option value="{{ $item->id }}">{{ $item->user->name }}</option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                    </div>
-
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    @foreach ($datas as $item)
+        <div class="modal fade" id="undang-{{ $item->code }}" data-bs-backdrop="static" data-bs-keyboard="false"
+            tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <form class="modal-dialog modal-dialog-centered" action="{{ route('undangColab', $item->code) }}"
+                method="post">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header border-0">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel" style="color: #957DAD">Undang
+                            Kolaborator</h1>
+                        <button type="button" class="btn-unstyled" data-bs-dismiss="modal" aria-label="Close">
+                            <i class="fa-regular fa-circle-xmark fa-lg btn-icon" style="color: #957DAD"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body border-0">
+                        <div class="col-md-12" style="font-size: 13px">
+                            <div class="mb-3">
+                                <label for="namakategori" class="form-label judulnottebal">Nama
+                                    Proyek</label>
+                                <input type="text" name="name" class="form-control form-i" id="namaproyek"
+                                    required="" readonly="" value="{{ $item->name }}" fdprocessedid="piymoo">
+                            </div>
+                            <style>
+                                #kategori {
+                                    width: 100%;
+                                    background-color: #f0f0f0;
+                                    color: #333;
+                                }
+                            </style>
+                            <div class="mb-3">
+                                <label for="namakategori" class="form-label judulnottebal">Nama artis</label>
+                                <div class="form-group">
+                                    <select class="js-example-basic-multiple" style="width: 100%"
+                                        id="kategori-{{ $item->code }}" name="kolaborator[]" multiple="multiple">
+                                        @foreach ($artis as $item)
+                                            @if ($item->user_id !== auth()->user()->id && $item->is_verified === 1)
+                                                <option style="background-color: white" value="{{ $item->id }}">
+                                                    {{ $item->user->name }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
                         </div>
-                        <div class="modal-footer border-0">
-                            <button type="submit" class="btn rounded-3 btn-link"
-                                style="color: inherit; text-decoration: none;">Undang</button>
-                        </div>
                     </div>
-                </form>
-            </div>
-        @endforeach
-
-        <script>
-            $(document).ready(function() {
-                $('.js-example-basic-multiple').select2();
-            });
-        </script>
-        {{-- <script>
-            $(document).ready(function() {
-                // Initialize Select2
-                // $('.js-example-basic-multiple').select2();
-
-                // Get a reference to the select element
-                let selectElement = $('#kategori');
-
-                // Make an AJAX request to fetch data
-                $.ajax({
-                    url: `/artis-verified/artis-kolaborasi`,
-                    type: 'GET',
-                    dataType: 'json',
-                    success: function(response) {
-                        // Clear existing options (if any)
-                        selectElement.empty();
-
-                        // Add a placeholder option (if needed)
-                        selectElement.append('<option value="">Select an option</option>');
-
-                        // Iterate through the response data and add options
-                        response.forEach(function(item) {
-                            selectElement.append(
-                                `<option value="${item.user.name}">${item.user.name}</option>`);
-                            console.log("hasil nya " + item.user.name);
-                        });
-
-                        // Update Select2 after modifying the options
-                        selectElement.trigger('change');
-                    }
-                });
-            });
-        </script> --}}
-
+                    <div class="modal-footer border-0">
+                        <button type="submit" class="btn rounded-3 btn-link"
+                            style="text-decoration: none;">Undang</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    @endforeach
     </div>
+    <script>
+        $(document).ready(function() {
+            $('.js-example-basic-multiple').select2({
+                maximumSelectionLength: 2,
+                language: {
+                    maximumSelected: function(e) {
+                        return 'Anda hanya dapat memilih ' + e.maximum + ' opsi.';
+                    }
+                },
+                theme: "classic"
+            });
+        });
+    </script>
 @endsection
